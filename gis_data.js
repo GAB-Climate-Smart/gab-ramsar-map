@@ -422,7 +422,7 @@ const gisPoints = [
     {
         "name":  "Waypoint 929",
         "desc":  "Mangrove Extent Baseline - Protected Area",
-        "lat":  0.77746,
+        "lat":  5.77746,
         "lng":  0.80101,
         "source":  "KETA.csv"
     },
@@ -1017,7 +1017,7 @@ const gisPoints = [
     {
         "name":  "Waypoint 980",
         "desc":  "Mangrove Extent Baseline - Protected Area",
-        "lat":  0.602558,
+        "lat":  5.602558,
         "lng":  0.93019,
         "source":  "KETA.csv"
     },
