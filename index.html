@@ -16,7 +16,6 @@
             --secondary: #85C742;
             --tertiary: #E67E22;
             --carbon: #8E44AD;
-            --coastal: #00897B;
             --user: #1565C0;
             --dark: #1A1A1A;
             --light: #F4F7F2;
@@ -53,13 +52,11 @@
         .stat-box { background: rgba(44, 94, 26, 0.05); border-radius: 10px; padding: 9px 10px; border: 1px solid rgba(44,94,26,0.1); transition: transform 0.3s ease; }
         .stat-box.mangrove { background: rgba(230,126,34,0.05); border-color: rgba(230,126,34,0.1); }
         .stat-box.carbon { background: rgba(142,68,173,0.05); border-color: rgba(142,68,173,0.1); }
-        .stat-box.coastal { background: rgba(0,137,123,0.05); border-color: rgba(0,137,123,0.1); }
         .stat-box.user-data { background: rgba(21,101,192,0.05); border-color: rgba(21,101,192,0.1); }
         .stat-box:hover { transform: translateY(-2px); }
         .stat-value { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
         .stat-box.mangrove .stat-value { color: var(--tertiary); }
         .stat-box.carbon .stat-value { color: var(--carbon); }
-        .stat-box.coastal .stat-value { color: var(--coastal); }
         .stat-box.user-data .stat-value { color: var(--user); }
         .stat-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; }
 
@@ -70,13 +67,11 @@
         .custom-popup h3 { margin: 0 0 8px 0; font-size: 1rem; color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 5px; }
         .custom-popup.mangrove h3 { color: var(--tertiary); border-bottom-color: var(--tertiary); }
         .custom-popup.carbon h3 { color: var(--carbon); border-bottom-color: var(--carbon); }
-        .custom-popup.coastal h3 { color: var(--coastal); border-bottom-color: var(--coastal); }
         .custom-popup.user h3 { color: var(--user); border-bottom-color: var(--user); }
         .custom-popup p { margin: 5px 0; font-size: 0.88rem; color: #444; }
         .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 5px; background: rgba(44,94,26,0.1); color: var(--primary); }
         .badge.mangrove { background: rgba(230,126,34,0.1); color: var(--tertiary); }
         .badge.carbon { background: rgba(142,68,173,0.1); color: var(--carbon); }
-        .badge.coastal { background: rgba(0,137,123,0.1); color: var(--coastal); }
         .badge.user { background: rgba(21,101,192,0.1); color: var(--user); }
 
         /* Controls */
@@ -99,7 +94,6 @@
         .filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(44,94,26,0.3); }
         .filter-btn.active[data-filter="mangrove"] { background: var(--tertiary); box-shadow: 0 4px 10px rgba(230,126,34,0.3); }
         .filter-btn.active[data-filter="carbon"] { background: var(--carbon); box-shadow: 0 4px 10px rgba(142,68,173,0.3); }
-        .filter-btn.active[data-filter="coastal"] { background: var(--coastal); box-shadow: 0 4px 10px rgba(0,137,123,0.3); }
         .filter-btn.active[data-filter="user"] { background: var(--user); box-shadow: 0 4px 10px rgba(21,101,192,0.3); }
 
         .leaflet-control-attribution { background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(4px); }
@@ -119,7 +113,7 @@
         .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
         .action-btn.blue { background: var(--user); }
         .action-btn.blue:hover { background: #0d47a1; }
-        .action-btn.teal { background: var(--coastal); }
+        .action-btn.teal { background: #00897B; }
         .action-btn.teal:hover { background: #00695c; }
 
         /* Feature Save Modal */
@@ -158,7 +152,6 @@
         .dp-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
         .dp-tab.active[data-tab="mangrove"] { color: var(--tertiary); border-bottom-color: var(--tertiary); }
         .dp-tab.active[data-tab="carbon"] { color: var(--carbon); border-bottom-color: var(--carbon); }
-        .dp-tab.active[data-tab="coastal"] { color: var(--coastal); border-bottom-color: var(--coastal); }
         .dp-tab.active[data-tab="user"] { color: var(--user); border-bottom-color: var(--user); }
         .dp-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
         .dp-section { display: none; }
@@ -177,17 +170,31 @@
         .locate-btn:hover { background: rgba(44,94,26,0.08); }
         .dp-empty { text-align: center; padding: 40px 0; color: #aaa; font-size: 0.9rem; }
 
-        /* Leaflet Draw Overrides */
-        .leaflet-draw-toolbar { border: 2px solid var(--primary) !important; border-radius: 8px !important; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; }
-        .leaflet-draw-toolbar a { background-color: var(--primary) !important; background-image: none !important; color: white !important; width: 34px !important; height: 34px !important; line-height: 34px !important; border-bottom: 1px solid rgba(255,255,255,0.2) !important; }
-        .leaflet-draw-toolbar a:hover { background-color: var(--secondary) !important; }
-        .leaflet-draw-draw-polygon { background-position: -31px -2px !important; filter: brightness(0) invert(1); }
-        .leaflet-draw-draw-marker { background-position: -271px -2px !important; filter: brightness(0) invert(1); }
-        .leaflet-draw-edit-edit { background-position: -151px -2px !important; filter: brightness(0) invert(1); }
-        .leaflet-draw-edit-remove { background-position: -181px -2px !important; filter: brightness(0) invert(1); }
+        /* Leaflet Draw Overrides — white background so sprite icons are clearly visible */
+        .leaflet-draw-toolbar {
+            border: 2px solid var(--primary) !important;
+            border-radius: 8px !important;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+            background: white !important;
+        }
+        .leaflet-draw-toolbar a {
+            background-color: white !important;
+            width: 34px !important;
+            height: 34px !important;
+            line-height: 34px !important;
+            border-bottom: 1px solid #e0e0e0 !important;
+        }
+        .leaflet-draw-toolbar a:hover {
+            background-color: #f1f8e9 !important;
+        }
+        .leaflet-draw-toolbar a.leaflet-draw-toolbar-button-enabled {
+            background-color: var(--primary) !important;
+            filter: brightness(0) invert(1);
+        }
         .leaflet-draw-actions { left: -110px !important; margin-top: 2px !important; }
         .leaflet-draw-actions a { background-color: #d32f2f !important; color: white !important; font-weight: 700 !important; padding: 5px 10px !important; border-radius: 4px !important; margin: 2px !important; height: auto !important; line-height: inherit !important; }
-        .leaflet-draw-tooltip { background: #1a1a1a !important; border: 1px solid #fff !important; color: #fff !important; font-weight: 600 !important; padding: 8px 12px !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
+        .leaflet-draw-tooltip { background: #1a1a1a !important; border: 1px solid rgba(255,255,255,0.3) !important; color: #fff !important; font-weight: 600 !important; padding: 8px 12px !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
         .leaflet-draw-tooltip-subtext { color: var(--secondary) !important; font-weight: 700 !important; }
 
         @media (max-width: 768px) {
@@ -223,10 +230,6 @@
             <h3>Save Feature</h3>
             <input type="text" id="feature-name" placeholder="Feature name (e.g. Survey Plot A)">
             <textarea id="feature-desc" placeholder="Description / notes..." rows="3"></textarea>
-            <select id="feature-category">
-                <option value="user-added">User Added</option>
-                <option value="coastal">Coastal Ecosystem</option>
-            </select>
             <p class="saving-indicator" id="saving-indicator">Saving to database...</p>
             <div class="modal-actions">
                 <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
@@ -242,7 +245,7 @@
     <div class="overlay header-panel">
         <div class="logo">GAB Ltd.</div>
         <h1>Ramsar Sites Data Map</h1>
-        <p class="subtitle">Ecological health, mangrove, carbon, coastal ecosystem and user field data across Keta &amp; Songor Ramsar Sites.</p>
+        <p class="subtitle">Ecological health, mangrove extent and carbon inventory data across the Keta &amp; Songor Ramsar Sites.</p>
         <div class="stats-container">
             <div class="stat-box">
                 <div class="stat-value" id="keta-count">--</div>
@@ -264,10 +267,6 @@
                 <div class="stat-value" id="carbon-count">--</div>
                 <div class="stat-label">Carbon Inventory Plots</div>
             </div>
-            <div class="stat-box coastal">
-                <div class="stat-value" id="coastal-count">--</div>
-                <div class="stat-label">Coastal Features</div>
-            </div>
             <div class="stat-box user-data" style="grid-column: 1/-1;">
                 <div class="stat-value" id="user-count">--</div>
                 <div class="stat-label">User Contributed Features</div>
@@ -281,7 +280,6 @@
         <button class="filter-btn" data-filter="health">Eco Health</button>
         <button class="filter-btn" data-filter="mangrove">Mangrove</button>
         <button class="filter-btn" data-filter="carbon">Carbon</button>
-        <button class="filter-btn" data-filter="coastal">Coastal</button>
         <button class="filter-btn" data-filter="user">User Added</button>
     </div>
 
@@ -297,7 +295,6 @@
             <button class="dp-tab active" data-tab="health">Eco Health</button>
             <button class="dp-tab" data-tab="mangrove">Mangrove</button>
             <button class="dp-tab" data-tab="carbon">Carbon</button>
-            <button class="dp-tab" data-tab="coastal">Coastal</button>
             <button class="dp-tab" data-tab="user">Users Input Data</button>
         </div>
         <div class="dp-body">
@@ -328,15 +325,6 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <!-- Coastal Tab -->
-            <div class="dp-section" id="tab-coastal">
-                <input class="dp-search" type="text" placeholder="Search coastal features..." oninput="filterTable('coastal-table', this.value)">
-                <div class="dp-count" id="coastal-count-label"></div>
-                <table class="data-table" id="coastal-table">
-                    <thead><tr><th>Name</th><th>Type</th><th>Site</th><th>Description</th><th></th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
             <!-- User Input Data Tab -->
             <div class="dp-section" id="tab-user">
                 <input class="dp-search" type="text" placeholder="Search user features..." oninput="filterTable('user-table', this.value)">
@@ -359,7 +347,7 @@
 
     <script src="gis_data.js?v=2"></script>
     <script src="carbon_data.js?v=1"></script>
-    <script src="coastal_data.js?v=1"></script>
+
 
     <script>
         // ─── Supabase ───────────────────────────────────────────────
@@ -485,13 +473,12 @@
         const adaIcon     = mkIcon('var(--secondary)','lg');
         const mangroveIcon= mkIcon('var(--tertiary)','sm');
         const carbonIcon  = mkIcon('#8E44AD','diamond');
-        const coastalIcon = mkIcon('var(--coastal)','lg');
         const userIcon    = mkIcon('var(--user)','lg');
 
         // ─── Layer Management ────────────────────────────────────────
         const mapLayers = [];
         const userLayers = {}; // id -> layer (for deletion)
-        let ketaCount=0, adaCount=0, mangrovePtCount=0, mangrovePolyCount=0, carbonCount=0, coastalCount=0;
+        let ketaCount=0, adaCount=0, mangrovePtCount=0, mangrovePolyCount=0, carbonCount=0;
 
         function addLayer(layer, category) {
             layer.category = category;
@@ -552,39 +539,12 @@
             });
         }
 
-        // ─── 5. Coastal Ecosystem ───────────────────────────────────
-        if (typeof coastalPoints !== 'undefined') {
-            coastalPoints.forEach(d => {
-                if (!d.lat || !d.lng) return;
-                coastalCount++;
-                const m = L.marker([d.lat, d.lng], { icon: coastalIcon });
-                m.bindPopup(`<div class="custom-popup coastal"><h3>${d.name}</h3><p>${d.desc}</p><p><strong>Type:</strong> ${d.ecosystem_type}</p><p style="color:#888;font-size:0.78rem">Lat:${d.lat.toFixed(4)}, Lng:${d.lng.toFixed(4)}</p><span class="badge coastal">Coastal Ecosystem</span></div>`);
-                m._coastalData = d;
-                addLayer(m, 'coastal');
-            });
-        }
-
-        if (typeof coastalPolygons !== 'undefined') {
-            coastalPolygons.forEach(poly => {
-                try {
-                    coastalCount++;
-                    const layer = L.geoJSON(poly.geojson, {
-                        style: { color:'#00897B', weight:2, opacity:1, fillColor:'#00897B', fillOpacity:0.25 },
-                        onEachFeature: (f, l) => l.bindPopup(`<div class="custom-popup coastal"><h3>${poly.name}</h3><p>${poly.desc}</p><p><strong>Type:</strong> ${poly.ecosystem_type}</p><p><strong>Site:</strong> ${poly.site}</p><span class="badge coastal">Coastal Ecosystem</span></div>`)
-                    }).addTo(map);
-                    layer.category = 'coastal';
-                    mapLayers.push(layer);
-                } catch(e) { console.error('Coastal polygon error:', poly.name, e); }
-            });
-        }
-
         // ─── Update stats ────────────────────────────────────────────
         document.getElementById('keta-count').innerText          = ketaCount;
         document.getElementById('ada-count').innerText           = adaCount;
         document.getElementById('mangrove-pt-count').innerText   = mangrovePtCount;
         document.getElementById('mangrove-poly-count').innerText = mangrovePolyCount;
         document.getElementById('carbon-count').innerText        = carbonCount;
-        document.getElementById('coastal-count').innerText       = coastalCount;
 
         // ─── Initial bounds fit ──────────────────────────────────────
         try {
@@ -634,8 +594,17 @@
             position: 'topright',
             edit: { featureGroup: drawnItems },
             draw: {
-                polygon: { allowIntersection:false, showArea:true, shapeOptions:{ color:'#1565C0' } },
-                marker: true,
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true,
+                    showLength: true,
+                    metric: true,
+                    repeatMode: false,
+                    shapeOptions: { color: '#1565C0', fillColor: '#1565C0', fillOpacity: 0.2, weight: 2 },
+                    // Snap to first vertex to close polygon
+                    drawError: { color: '#e53935', timeout: 1000 }
+                },
+                marker: { icon: userIcon },
                 polyline: false, circle: false, rectangle: false, circlemarker: false
             }
         });
@@ -659,7 +628,7 @@
         async function saveFeature() {
             const name     = document.getElementById('feature-name').value.trim() || 'Unnamed Feature';
             const desc     = document.getElementById('feature-desc').value.trim();
-            const category = document.getElementById('feature-category').value;
+            const category = 'user-added';
 
             if (!tempFeature) return;
 
@@ -678,16 +647,13 @@
             tempFeature.feature.properties = { name, description:desc, category, area_hectares:areaHectares };
 
             const geojson = tempFeature.toGeoJSON();
-            const color = category === 'coastal' ? '#00897B' : '#1565C0';
-            const badgeClass = category === 'coastal' ? 'coastal' : 'user';
-            const badgeLabel = category === 'coastal' ? 'Coastal Ecosystem' : 'User Added';
 
             tempFeature.bindPopup(`
-                <div class="custom-popup ${badgeClass}">
+                <div class="custom-popup user">
                     <h3>${name}</h3>
                     ${areaInfo}
                     <p>${desc}</p>
-                    <span class="badge ${badgeClass}">${badgeLabel}</span>
+                    <span class="badge user">User Added</span>
                 </div>
             `);
 
@@ -856,7 +822,6 @@
             buildHealthTable();
             buildMangroveTable();
             buildCarbonTable();
-            buildCoastalTable();
         }
 
         function filterTable(tableId, query) {
@@ -912,27 +877,6 @@
                 });
                 document.getElementById('carbon-count-label').textContent = `${carbonInventoryPoints.length} carbon plots`;
             }
-        }
-
-        function buildCoastalTable() {
-            const tbody = document.querySelector('#coastal-table tbody');
-            tbody.innerHTML = '';
-            if (typeof coastalPoints !== 'undefined') {
-                coastalPoints.forEach(d => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${d.name}</td><td><span class="td-badge" style="background:rgba(0,137,123,0.1);color:var(--coastal)">${d.ecosystem_type}</span></td><td>${d.site}</td><td style="font-size:0.8rem;color:#666">${d.desc}</td><td>—</td>`;
-                    tbody.appendChild(tr);
-                });
-            }
-            if (typeof coastalPolygons !== 'undefined') {
-                coastalPolygons.forEach(p => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${p.name}</td><td><span class="td-badge" style="background:rgba(0,137,123,0.15);color:var(--coastal)">${p.ecosystem_type}</span></td><td>${p.site}</td><td style="font-size:0.8rem;color:#666">${p.desc}</td><td>—</td>`;
-                    tbody.appendChild(tr);
-                });
-            }
-            const total = (typeof coastalPoints!=='undefined'?coastalPoints.length:0) + (typeof coastalPolygons!=='undefined'?coastalPolygons.length:0);
-            document.getElementById('coastal-count-label').textContent = `${total} coastal features`;
         }
 
         async function loadUserFeaturesTable() {
