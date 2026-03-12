@@ -344,9 +344,111 @@
             }
             h1 { font-size: 1.8rem; }
         }
+        /* Drawing & Export Styles */
+        #export-btn {
+            position: absolute;
+            top: 200px;
+            right: 20px;
+            z-index: 1000;
+            background: #2e7d32;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #export-btn:hover {
+            background: #1b5e20;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        #feature-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 350px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #1b5e20;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+        }
+
+        .save-btn { background: #2e7d32; color: white; }
+        .cancel-btn { background: #eee; color: #666; }
     </style>
 </head>
 <body>
+    <button id="export-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Export Data
+    </button>
+
+    <div id="feature-modal">
+        <div class="modal-content">
+            <h3>New Feature Data</h3>
+            <input type="text" id="feature-name" placeholder="Feature Name (e.g. Plot A)">
+            <textarea id="feature-desc" placeholder="Description/Notes..." rows="3"></textarea>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn save-btn" onclick="saveFeature()">Save Feature</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Map Container -->
     <div id="map"></div>
@@ -397,6 +499,7 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     
     <!-- Load Processed GIS Data -->
     <script src="gis_data.js?v=2"></script>
@@ -793,6 +896,96 @@
             });
         });
 
+        // Initialize User Data Layer
+        const drawnItems = new L.FeatureGroup().addTo(map);
+        let tempFeature = null;
+
+        // Leaflet.draw Control
+        const drawControl = new L.Control.Draw({
+            position: 'topright',
+            edit: {
+                featureGroup: drawnItems
+            },
+            draw: {
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true,
+                    shapeOptions: { color: '#2e7d32' }
+                },
+                marker: true,
+                polyline: false,
+                circle: false,
+                rectangle: false,
+                circlemarker: false
+            }
+        });
+        map.addControl(drawControl);
+
+        // Feature Creation Handling
+        map.on(L.Draw.Event.CREATED, function (e) {
+            tempFeature = e.layer;
+            openModal();
+        });
+
+        function openModal() {
+            document.getElementById('feature-modal').style.display = 'flex';
+            document.getElementById('feature-name').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('feature-modal').style.display = 'none';
+            document.getElementById('feature-name').value = '';
+            document.getElementById('feature-desc').value = '';
+            tempFeature = null;
+        }
+
+        function saveFeature() {
+            const name = document.getElementById('feature-name').value || 'Unnamed Feature';
+            const desc = document.getElementById('feature-desc').value || '';
+            
+            if (tempFeature) {
+                // Add metadata to the layer
+                tempFeature.feature = tempFeature.feature || { type: 'Feature', properties: {} };
+                tempFeature.feature.properties.name = name;
+                tempFeature.feature.properties.description = desc;
+                tempFeature.feature.properties.category = 'user-added';
+
+                // Setup Popup
+                const popupContent = `
+                    <div class="custom-popup">
+                        <h3 style="color: #2e7d32;">${name}</h3>
+                        <p>${desc}</p>
+                        <span class="badge" style="background: rgba(46, 125, 50, 0.1); color: #2e7d32;">User Added</span>
+                    </div>
+                `;
+                tempFeature.bindPopup(popupContent);
+                drawnItems.addLayer(tempFeature);
+            }
+            closeModal();
+        }
+
+        // Export Functionality
+        document.getElementById('export-btn').onclick = function() {
+            const data = drawnItems.toGeoJSON();
+            if (data.features.length === 0) {
+                alert('No data to export! Use the drawing icons on the right to create points or polygons first.');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'GAB-Ramsar-Custom-Data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        // Original script continues...
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
     </script>
 </body>
 </html>
