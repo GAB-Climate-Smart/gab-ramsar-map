@@ -3,505 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAB Ltd - Ecological Health & Mangrove Map</title>
-    
-    <!-- Leaflet CSS -->
+    <title>GAB Ltd - Ramsar Sites Data Map</title>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
         :root {
-            --primary: #2C5E1A; /* Deep Forest Green (Keta) */
-            --secondary: #85C742; /* Vibrant Leaf Green (Ada) */
-            --tertiary: #E67E22; /* Orange (Mangroves) */
-            --carbon: #8E44AD; /* Purple (Carbon Inventory) */
+            --primary: #2C5E1A;
+            --secondary: #85C742;
+            --tertiary: #E67E22;
+            --carbon: #8E44AD;
+            --coastal: #00897B;
+            --user: #1565C0;
             --dark: #1A1A1A;
             --light: #F4F7F2;
-            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.88);
             --glass-border: rgba(255, 255, 255, 0.4);
         }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--dark);
-            color: var(--dark);
-            overflow: hidden;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background-color: var(--dark); color: var(--dark); overflow: hidden; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        #map {
-            height: 100vh;
-            width: 100vw;
-            z-index: 1;
-        }
+        .overlay { position: absolute; z-index: 1000; pointer-events: none; }
 
-        /* UI Overlay */
-        .overlay {
-            position: absolute;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
+        /* Header Panel */
         .header-panel {
-            top: 20px;
-            left: 20px;
-            width: 320px;
+            top: 20px; left: 20px; width: 300px;
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 12px; padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             pointer-events: auto;
-            transform: translateY(-20px);
-            opacity: 0;
+            transform: translateY(-20px); opacity: 0;
             animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            max-height: 85vh;
-            overflow-y: auto;
+            max-height: 85vh; overflow-y: auto;
         }
+        @keyframes slideDown { to { transform: translateY(0); opacity: 1; } }
 
-        @keyframes slideDown {
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
+        .logo { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .logo::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--secondary); border-radius: 50%; }
+        h1 { font-size: 1.15rem; line-height: 1.2; margin: 0 0 6px 0; color: var(--dark); }
+        p.subtitle { font-size: 0.78rem; line-height: 1.4; color: #555; margin-bottom: 14px; }
 
-        .logo {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--primary);
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .stat-box { background: rgba(44, 94, 26, 0.05); border-radius: 10px; padding: 9px 10px; border: 1px solid rgba(44,94,26,0.1); transition: transform 0.3s ease; }
+        .stat-box.mangrove { background: rgba(230,126,34,0.05); border-color: rgba(230,126,34,0.1); }
+        .stat-box.carbon { background: rgba(142,68,173,0.05); border-color: rgba(142,68,173,0.1); }
+        .stat-box.coastal { background: rgba(0,137,123,0.05); border-color: rgba(0,137,123,0.1); }
+        .stat-box.user-data { background: rgba(21,101,192,0.05); border-color: rgba(21,101,192,0.1); }
+        .stat-box:hover { transform: translateY(-2px); }
+        .stat-value { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+        .stat-box.mangrove .stat-value { color: var(--tertiary); }
+        .stat-box.carbon .stat-value { color: var(--carbon); }
+        .stat-box.coastal .stat-value { color: var(--coastal); }
+        .stat-box.user-data .stat-value { color: var(--user); }
+        .stat-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; }
 
-        .logo::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--secondary);
-            border-radius: 50%;
-        }
+        /* Popups */
+        .leaflet-popup-content-wrapper { background: var(--glass-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); padding: 5px; }
+        .leaflet-popup-tip { background: rgba(255,255,255,0.9); }
+        .custom-popup { min-width: 200px; }
+        .custom-popup h3 { margin: 0 0 8px 0; font-size: 1rem; color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 5px; }
+        .custom-popup.mangrove h3 { color: var(--tertiary); border-bottom-color: var(--tertiary); }
+        .custom-popup.carbon h3 { color: var(--carbon); border-bottom-color: var(--carbon); }
+        .custom-popup.coastal h3 { color: var(--coastal); border-bottom-color: var(--coastal); }
+        .custom-popup.user h3 { color: var(--user); border-bottom-color: var(--user); }
+        .custom-popup p { margin: 5px 0; font-size: 0.88rem; color: #444; }
+        .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 5px; background: rgba(44,94,26,0.1); color: var(--primary); }
+        .badge.mangrove { background: rgba(230,126,34,0.1); color: var(--tertiary); }
+        .badge.carbon { background: rgba(142,68,173,0.1); color: var(--carbon); }
+        .badge.coastal { background: rgba(0,137,123,0.1); color: var(--coastal); }
+        .badge.user { background: rgba(21,101,192,0.1); color: var(--user); }
 
-        h1 {
-            font-size: 1.25rem;
-            line-height: 1.2;
-            margin: 0 0 8px 0;
-            color: var(--dark);
-        }
-
-        p.subtitle {
-            font-size: 0.8rem;
-            line-height: 1.4;
-            color: #555;
-            margin-bottom: 15px;
-        }
-
-        /* Stats Blocks */
-        .stats-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .stat-box {
-            background: rgba(44, 94, 26, 0.05);
-            border-radius: 10px;
-            padding: 10px;
-            border: 1px solid rgba(44, 94, 26, 0.1);
-            transition: transform 0.3s ease, background 0.3s ease;
-        }
-        
-        .stat-box.mangrove {
-            background: rgba(230, 126, 34, 0.05);
-            border: 1px solid rgba(230, 126, 34, 0.1);
-        }
-
-        .stat-box.carbon {
-            background: rgba(142, 68, 173, 0.05);
-            border: 1px solid rgba(142, 68, 173, 0.1);
-        }
-
-        .stat-box:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 3px;
-        }
-        
-        .stat-box.mangrove .stat-value {
-            color: var(--tertiary);
-        }
-
-        .stat-box.carbon .stat-value {
-            color: var(--carbon);
-        }
-
-        .stat-label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #666;
-            font-weight: 600;
-        }
-
-        /* Custom Popup Styling */
-        .leaflet-popup-content-wrapper {
-            background: var(--glass-bg);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 1px solid var(--glass-border);
-            padding: 5px;
-        }
-        
-        .leaflet-popup-tip {
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .custom-popup {
-            min-width: 200px;
-        }
-
-        .custom-popup h3 {
-            margin: 0 0 8px 0;
-            font-size: 1.1rem;
-            color: var(--primary);
-            border-bottom: 2px solid var(--secondary);
-            padding-bottom: 5px;
-        }
-        
-        .custom-popup.mangrove h3 {
-            color: var(--tertiary);
-            border-bottom: 2px solid var(--tertiary);
-        }
-
-        .custom-popup.carbon h3 {
-            color: var(--carbon);
-            border-bottom: 2px solid var(--carbon);
-        }
-
-        .custom-popup p {
-            margin: 5px 0;
-            font-size: 0.9rem;
-            color: #444;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 5px;
-            background: rgba(44, 94, 26, 0.1);
-            color: var(--primary);
-        }
-        
-        .badge.mangrove {
-            background: rgba(230, 126, 34, 0.1);
-            color: var(--tertiary);
-        }
-
-        .badge.carbon {
-            background: rgba(142, 68, 173, 0.1);
-            color: var(--carbon);
-        }
-        
-        /* Layer Control Styling Fix */
-        .basemap-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 2000;
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 50px;
-            padding: 8px 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--dark);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .basemap-toggle:hover {
-            background: #fff;
-            color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .basemap-toggle svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        /* Map Controls Repositioning */
+        /* Controls */
         .controls-panel {
-            bottom: 40px;
-            left: 40px;
+            bottom: 40px; left: 40px;
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
-            border-radius: 100px;
-            padding: 10px 20px;
+            border-radius: 100px; padding: 8px 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             pointer-events: auto;
-            display: flex;
-            gap: 15px;
-            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            animation-delay: 0.2s;
-            opacity: 0;
-            transform: translateY(20px);
+            display: flex; gap: 4px; flex-wrap: wrap;
+            animation: slideUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+            opacity: 0; transform: translateY(20px);
         }
+        @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
 
-        @keyframes slideUp {
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
+        .filter-btn { background: transparent; border: none; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; color: #666; padding: 7px 13px; border-radius: 50px; transition: all 0.25s ease; }
+        .filter-btn:hover { color: var(--primary); background: rgba(44,94,26,0.06); }
+        .filter-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(44,94,26,0.3); }
+        .filter-btn.active[data-filter="mangrove"] { background: var(--tertiary); box-shadow: 0 4px 10px rgba(230,126,34,0.3); }
+        .filter-btn.active[data-filter="carbon"] { background: var(--carbon); box-shadow: 0 4px 10px rgba(142,68,173,0.3); }
+        .filter-btn.active[data-filter="coastal"] { background: var(--coastal); box-shadow: 0 4px 10px rgba(0,137,123,0.3); }
+        .filter-btn.active[data-filter="user"] { background: var(--user); box-shadow: 0 4px 10px rgba(21,101,192,0.3); }
 
-        .filter-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #666;
-            padding: 8px 16px;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-        }
+        .leaflet-control-attribution { background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(4px); }
 
-        .filter-btn:hover {
-            color: var(--primary);
-            background: rgba(44, 94, 26, 0.05);
+        /* Action Buttons (bottom right) */
+        .action-btns {
+            position: absolute; bottom: 40px; right: 40px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
         }
-
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 10px rgba(44, 94, 26, 0.3);
-        }
-        
-        .filter-btn.active[data-filter="mangrove"] {
-            background: var(--tertiary);
-            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
-        }
-
-        .filter-btn.active[data-filter="carbon"] {
-            background: var(--carbon);
-            box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);
-        }
-
-        /* Map Attribution fade */
-        .leaflet-control-attribution {
-            background: rgba(255,255,255,0.5) !important;
-            backdrop-filter: blur(4px);
-        }
-
-        @media (max-width: 768px) {
-            .header-panel {
-                top: 20px;
-                left: 20px;
-                right: 20px;
-                width: auto;
-                padding: 20px;
-            }
-            .controls-panel {
-                bottom: 20px;
-                left: 20px;
-                right: 20px;
-                border-radius: 12px;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-            h1 { font-size: 1.8rem; }
-        }
-        /* Drawing & Export Styles */
-        #export-btn {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            z-index: 1000;
-            background: #2e7d32;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #export-btn:hover {
-            background: #1b5e20;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-        }
-
-        #feature-modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            width: 350px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            animation: modalFadeIn 0.3s ease-out;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .modal-content h3 {
-            margin-top: 0;
-            color: #1b5e20;
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .modal-content input, .modal-content textarea {
-            width: 100%;
-            margin: 10px 0;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        .action-btn {
+            background: #2e7d32; color: white; padding: 10px 16px; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25); border: none;
+            display: flex; align-items: center; gap: 8px; transition: all 0.25s ease;
             font-family: inherit;
         }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+        .action-btn.blue { background: var(--user); }
+        .action-btn.blue:hover { background: #0d47a1; }
+        .action-btn.teal { background: var(--coastal); }
+        .action-btn.teal:hover { background: #00695c; }
 
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .modal-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: none;
-            font-weight: 600;
-        }
-
+        /* Feature Save Modal */
+        #feature-modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 24px; border-radius: 16px; width: 360px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); animation: modalFadeIn 0.3s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content h3 { margin-top: 0; color: #1b5e20; }
+        .modal-content input, .modal-content textarea { width: calc(100% - 24px); margin: 8px 0; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
+        .modal-content select { width: 100%; margin: 8px 0; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+        .modal-btn { padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; font-weight: 600; font-family: inherit; }
         .save-btn { background: #2e7d32; color: white; }
         .cancel-btn { background: #eee; color: #666; }
+        .saving-indicator { font-size: 0.8rem; color: #888; margin-top: 6px; display: none; }
 
-        /* Leaflet.draw Visibility Overrides */
-        .leaflet-draw-toolbar {
-            border: 2px solid var(--primary) !important;
-            border-radius: 8px !important;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+        /* Data View Panel */
+        #data-panel {
+            position: fixed; top: 0; right: -520px; width: 500px; height: 100vh;
+            background: white; z-index: 2000;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.2);
+            transition: right 0.4s cubic-bezier(0.16,1,0.3,1);
+            display: flex; flex-direction: column;
         }
-
-        .leaflet-draw-toolbar a {
-            background-color: var(--primary) !important;
-            background-image: none !important;
-            color: white !important;
-            width: 34px !important;
-            height: 34px !important;
-            line-height: 34px !important;
-            border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+        #data-panel.open { right: 0; }
+        .dp-header {
+            padding: 20px 24px 0; border-bottom: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
         }
+        .dp-header h2 { margin: 0 0 16px 0; font-size: 1.15rem; color: var(--dark); }
+        .dp-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #888; padding: 4px; border-radius: 6px; }
+        .dp-close:hover { background: #f5f5f5; color: var(--dark); }
+        .dp-tabs { display: flex; gap: 0; padding: 0 24px; border-bottom: 1px solid #eee; flex-shrink: 0; overflow-x: auto; }
+        .dp-tab { background: none; border: none; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 600; color: #888; padding: 12px 14px; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+        .dp-tab:hover { color: var(--dark); }
+        .dp-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .dp-tab.active[data-tab="mangrove"] { color: var(--tertiary); border-bottom-color: var(--tertiary); }
+        .dp-tab.active[data-tab="carbon"] { color: var(--carbon); border-bottom-color: var(--carbon); }
+        .dp-tab.active[data-tab="coastal"] { color: var(--coastal); border-bottom-color: var(--coastal); }
+        .dp-tab.active[data-tab="user"] { color: var(--user); border-bottom-color: var(--user); }
+        .dp-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
+        .dp-section { display: none; }
+        .dp-section.active { display: block; }
+        .dp-search { width: calc(100% - 24px); padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.85rem; margin-bottom: 14px; }
+        .dp-count { font-size: 0.78rem; color: #888; margin-bottom: 10px; font-weight: 500; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .data-table th { background: #f8f8f8; padding: 8px 10px; text-align: left; font-weight: 700; font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.4px; color: #555; border-bottom: 2px solid #eee; position: sticky; top: 0; }
+        .data-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; color: #333; vertical-align: top; }
+        .data-table tr:hover td { background: #fafafa; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .td-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+        .delete-row-btn { background: none; border: none; cursor: pointer; color: #e53935; font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; }
+        .delete-row-btn:hover { background: #ffebee; }
+        .locate-btn { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; }
+        .locate-btn:hover { background: rgba(44,94,26,0.08); }
+        .dp-empty { text-align: center; padding: 40px 0; color: #aaa; font-size: 0.9rem; }
 
-        .leaflet-draw-toolbar a:hover {
-            background-color: var(--secondary) !important;
-        }
-
-        /* Custom Icons for visibility */
+        /* Leaflet Draw Overrides */
+        .leaflet-draw-toolbar { border: 2px solid var(--primary) !important; border-radius: 8px !important; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; }
+        .leaflet-draw-toolbar a { background-color: var(--primary) !important; background-image: none !important; color: white !important; width: 34px !important; height: 34px !important; line-height: 34px !important; border-bottom: 1px solid rgba(255,255,255,0.2) !important; }
+        .leaflet-draw-toolbar a:hover { background-color: var(--secondary) !important; }
         .leaflet-draw-draw-polygon { background-position: -31px -2px !important; filter: brightness(0) invert(1); }
         .leaflet-draw-draw-marker { background-position: -271px -2px !important; filter: brightness(0) invert(1); }
         .leaflet-draw-edit-edit { background-position: -151px -2px !important; filter: brightness(0) invert(1); }
         .leaflet-draw-edit-remove { background-position: -181px -2px !important; filter: brightness(0) invert(1); }
+        .leaflet-draw-actions { left: -110px !important; margin-top: 2px !important; }
+        .leaflet-draw-actions a { background-color: #d32f2f !important; color: white !important; font-weight: 700 !important; padding: 5px 10px !important; border-radius: 4px !important; margin: 2px !important; height: auto !important; line-height: inherit !important; }
+        .leaflet-draw-tooltip { background: #1a1a1a !important; border: 1px solid #fff !important; color: #fff !important; font-weight: 600 !important; padding: 8px 12px !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
+        .leaflet-draw-tooltip-subtext { color: var(--secondary) !important; font-weight: 700 !important; }
 
-        .leaflet-draw-actions {
-            left: -110px !important;
-            margin-top: 2px !important;
-        }
-
-        .leaflet-draw-actions a {
-            background-color: #d32f2f !important;
-            color: white !important;
-            font-weight: 700 !important;
-            padding: 5px 10px !important;
-            border-radius: 4px !important;
-            margin: 2px !important;
-            height: auto !important;
-            line-height: inherit !important;
-        }
-
-        .leaflet-draw-tooltip {
-            background: #1a1a1a !important;
-            border: 1px solid #fff !important;
-            color: #fff !important;
-            font-weight: 600 !important;
-            padding: 8px 12px !important;
-            border-radius: 6px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-        }
-
-        .leaflet-draw-tooltip-subtext {
-            color: var(--secondary) !important;
-            font-weight: 700 !important;
+        @media (max-width: 768px) {
+            .header-panel { top: 10px; left: 10px; right: 10px; width: auto; }
+            .controls-panel { bottom: 10px; left: 10px; right: 10px; border-radius: 12px; justify-content: center; }
+            .action-btns { bottom: 80px; right: 10px; }
+            #data-panel { width: 100vw; }
         }
     </style>
 </head>
 <body>
-    <button id="export-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        Export Data
-    </button>
 
+    <!-- Action Buttons -->
+    <div class="action-btns">
+        <button class="action-btn" id="export-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export KML
+        </button>
+        <button class="action-btn teal" id="upload-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Ingest GeoJSON
+        </button>
+        <button class="action-btn blue" id="data-view-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Data View
+        </button>
+    </div>
+    <input type="file" id="upload-input" accept=".geojson,.json,.kml" style="display:none">
+
+    <!-- Feature Save Modal -->
     <div id="feature-modal">
         <div class="modal-content">
-            <h3>New Feature Data</h3>
-            <input type="text" id="feature-name" placeholder="Feature Name (e.g. Plot A)">
-            <textarea id="feature-desc" placeholder="Description/Notes..." rows="3"></textarea>
+            <h3>Save Feature</h3>
+            <input type="text" id="feature-name" placeholder="Feature name (e.g. Survey Plot A)">
+            <textarea id="feature-desc" placeholder="Description / notes..." rows="3"></textarea>
+            <select id="feature-category">
+                <option value="user-added">User Added</option>
+                <option value="coastal">Coastal Ecosystem</option>
+            </select>
+            <p class="saving-indicator" id="saving-indicator">Saving to database...</p>
             <div class="modal-actions">
                 <button class="modal-btn cancel-btn" onclick="closeModal()">Cancel</button>
                 <button class="modal-btn save-btn" onclick="saveFeature()">Save Feature</button>
@@ -509,480 +235,413 @@
         </div>
     </div>
 
-    <!-- Map Container -->
+    <!-- Map -->
     <div id="map"></div>
-    
-    <!-- UI Overlay: Header -->
+
+    <!-- Header Panel -->
     <div class="overlay header-panel">
         <div class="logo">GAB Ltd.</div>
         <h1>Ramsar Sites Data Map</h1>
-        <p class="subtitle">Ecological health, mangrove extent baselines and carbon inventory plots across the Keta and Songor Ramsar Sites.</p>
-        
+        <p class="subtitle">Ecological health, mangrove, carbon, coastal ecosystem and user field data across Keta &amp; Songor Ramsar Sites.</p>
         <div class="stats-container">
             <div class="stat-box">
                 <div class="stat-value" id="keta-count">--</div>
                 <div class="stat-label">Health Sites (Keta)</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label" style="text-align: right;">Health Sites (Ada)</div>
-                <div class="stat-value" id="ada-count" style="text-align: right; color: var(--secondary);">--</div>
+                <div class="stat-value" id="ada-count" style="color:var(--secondary)">--</div>
+                <div class="stat-label">Health Sites (Ada)</div>
             </div>
             <div class="stat-box mangrove">
                 <div class="stat-value" id="mangrove-pt-count">--</div>
                 <div class="stat-label">Mangrove Points</div>
             </div>
             <div class="stat-box mangrove">
-                <div class="stat-label" style="text-align: right;">Mangrove Polygons</div>
-                <div class="stat-value" id="mangrove-poly-count" style="text-align: right;">--</div>
+                <div class="stat-value" id="mangrove-poly-count">--</div>
+                <div class="stat-label">Mangrove Polygons</div>
             </div>
-            <div class="stat-box carbon" style="grid-column: 1 / -1;">
+            <div class="stat-box carbon">
                 <div class="stat-value" id="carbon-count">--</div>
                 <div class="stat-label">Carbon Inventory Plots</div>
+            </div>
+            <div class="stat-box coastal">
+                <div class="stat-value" id="coastal-count">--</div>
+                <div class="stat-label">Coastal Features</div>
+            </div>
+            <div class="stat-box user-data" style="grid-column: 1/-1;">
+                <div class="stat-value" id="user-count">--</div>
+                <div class="stat-label">User Contributed Features</div>
             </div>
         </div>
     </div>
 
-    <!-- UI Overlay: Controls -->
+    <!-- Filter Controls -->
     <div class="overlay controls-panel">
         <button class="filter-btn active" data-filter="all">All Data</button>
         <button class="filter-btn" data-filter="health">Eco Health</button>
         <button class="filter-btn" data-filter="mangrove">Mangrove</button>
         <button class="filter-btn" data-filter="carbon">Carbon</button>
+        <button class="filter-btn" data-filter="coastal">Coastal</button>
+        <button class="filter-btn" data-filter="user">User Added</button>
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- Data View Panel -->
+    <div id="data-panel">
+        <div class="dp-header">
+            <div>
+                <h2>Data View</h2>
+            </div>
+            <button class="dp-close" id="dp-close-btn">&#x2715;</button>
+        </div>
+        <div class="dp-tabs">
+            <button class="dp-tab active" data-tab="health">Eco Health</button>
+            <button class="dp-tab" data-tab="mangrove">Mangrove</button>
+            <button class="dp-tab" data-tab="carbon">Carbon</button>
+            <button class="dp-tab" data-tab="coastal">Coastal</button>
+            <button class="dp-tab" data-tab="user">Users Input Data</button>
+        </div>
+        <div class="dp-body">
+            <!-- Eco Health Tab -->
+            <div class="dp-section active" id="tab-health">
+                <input class="dp-search" type="text" placeholder="Search sites..." oninput="filterTable('health-table', this.value)">
+                <div class="dp-count" id="health-count-label"></div>
+                <table class="data-table" id="health-table">
+                    <thead><tr><th>Site</th><th>Region</th><th>Type</th><th>Description</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Mangrove Tab -->
+            <div class="dp-section" id="tab-mangrove">
+                <input class="dp-search" type="text" placeholder="Search mangrove data..." oninput="filterTable('mangrove-table', this.value)">
+                <div class="dp-count" id="mangrove-count-label"></div>
+                <table class="data-table" id="mangrove-table">
+                    <thead><tr><th>Name</th><th>Type</th><th>Source</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Carbon Tab -->
+            <div class="dp-section" id="tab-carbon">
+                <input class="dp-search" type="text" placeholder="Search carbon plots..." oninput="filterTable('carbon-table', this.value)">
+                <div class="dp-count" id="carbon-count-label"></div>
+                <table class="data-table" id="carbon-table">
+                    <thead><tr><th>Plot ID</th><th>Site</th><th>Community</th><th>Land Cover</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Coastal Tab -->
+            <div class="dp-section" id="tab-coastal">
+                <input class="dp-search" type="text" placeholder="Search coastal features..." oninput="filterTable('coastal-table', this.value)">
+                <div class="dp-count" id="coastal-count-label"></div>
+                <table class="data-table" id="coastal-table">
+                    <thead><tr><th>Name</th><th>Type</th><th>Site</th><th>Description</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- User Input Data Tab -->
+            <div class="dp-section" id="tab-user">
+                <input class="dp-search" type="text" placeholder="Search user features..." oninput="filterTable('user-table', this.value)">
+                <div class="dp-count" id="user-count-label"></div>
+                <div id="user-table-empty" class="dp-empty" style="display:none">No user features yet. Use the drawing tools to add points and polygons to the map.</div>
+                <table class="data-table" id="user-table">
+                    <thead><tr><th>Name</th><th>Type</th><th>Area (ha)</th><th>Description</th><th>Date</th><th></th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <!-- Add GeometryUtil for area calculation -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js"></script>
-    <!-- Add tokml for KML export -->
     <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
-    
-    <!-- Load Processed GIS Data -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
     <script src="gis_data.js?v=2"></script>
     <script src="carbon_data.js?v=1"></script>
+    <script src="coastal_data.js?v=1"></script>
 
     <script>
-        // Helper to convert Degrees Decimal Minutes (DDM) to Decimal Degrees (DD)
+        // ─── Supabase ───────────────────────────────────────────────
+        const SUPABASE_URL  = 'https://wmgbqjmsizixhjosbflg.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtZ2Jxam1zaXppeGhqb3NiZmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDM2MzgsImV4cCI6MjA4ODg3OTYzOH0.NKCSlp_oq9g2Pql9-1fkS_7utUs2tZHGMTNklgvKGhw';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+        // ─── Helpers ────────────────────────────────────────────────
         function ddmToDd(degrees, minutes, direction) {
             let dd = degrees + (minutes / 60);
-            if (direction === "S" || direction === "W") {
-                dd = dd * -1;
-            }
+            if (direction === 'S' || direction === 'W') dd *= -1;
             return dd;
         }
 
-        // Original Sampling Data (Ecological Health)
+        function fmtDate(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        // ─── Sampling Data (Eco Health) ─────────────────────────────
         const samplingData = [
-            // Keta Water Sampling
-            { region: 'keta', site: 'Anyanui', desc: 'Anyanui landing site', lat: ddmToDd(5, 47.012, 'N'), lng: ddmToDd(0, 43.276, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Fuveme', desc: 'Fuveme creek', lat: ddmToDd(5, 46.564, 'N'), lng: ddmToDd(0, 43.921, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Agorkedzi', desc: 'Agorkedzi creek', lat: ddmToDd(5, 46.704, 'N'), lng: ddmToDd(0, 42.476, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Tunu', desc: 'Tunu creek', lat: ddmToDd(5, 47.571, 'N'), lng: ddmToDd(0, 43.140, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Anyanui', desc: 'Anyanui - Tunu road', lat: ddmToDd(5, 47.308, 'N'), lng: ddmToDd(0, 43.600, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Anyanui', desc: 'Anyanui - Tunu road', lat: ddmToDd(5, 47.366, 'N'), lng: ddmToDd(0, 43.609, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Agbledome', desc: 'Agbledome', lat: ddmToDd(5, 47.195, 'N'), lng: ddmToDd(0, 45.235, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Dzita', desc: 'Dzita', lat: ddmToDd(5, 46.442, 'N'), lng: ddmToDd(0, 46.910, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Akplotorkor', desc: 'Akplotorkor sites 1', lat: ddmToDd(5, 46.359, 'N'), lng: ddmToDd(0, 47.451, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Akplotorkor', desc: 'Akplotorkor site 2', lat: ddmToDd(5, 46.383, 'N'), lng: ddmToDd(0, 48.621, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Saviatula', desc: 'Saviatula Bridge', lat: ddmToDd(5, 46.957, 'N'), lng: ddmToDd(0, 49.803, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Salo', desc: 'Salo road', lat: ddmToDd(5, 48.761, 'N'), lng: ddmToDd(0, 47.953, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Salo', desc: 'salo mangrove market', lat: ddmToDd(5, 49.464, 'N'), lng: ddmToDd(0, 47.405, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Agortoe', desc: 'Agortoe site 1', lat: ddmToDd(5, 51.700, 'N'), lng: ddmToDd(0, 45.274, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Agortoe', desc: 'Agortoe site 2', lat: ddmToDd(5, 51.786, 'N'), lng: ddmToDd(0, 45.176, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Agbatsivi', desc: 'Agbastivi site 1', lat: ddmToDd(5, 51.977, 'N'), lng: ddmToDd(0, 44.884, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Agbatsivi', desc: 'Agbastivi site 2', lat: ddmToDd(5, 52.124, 'N'), lng: ddmToDd(0, 44.733, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Galotse', desc: 'Galoste site 1', lat: ddmToDd(5, 52.021, 'N'), lng: ddmToDd(0, 42.560, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Galotse', desc: 'Galoste site 2', lat: ddmToDd(5, 52.818, 'N'), lng: ddmToDd(0, 41.397, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Genui', desc: 'Gehnui Road', lat: ddmToDd(5, 59.136, 'N'), lng: ddmToDd(0, 50.586, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Afiadenyigba', desc: 'Afiadenyigba bridge', lat: ddmToDd(6, 1.888, 'N'), lng: ddmToDd(0, 58.854, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Afiadenyigba', desc: 'Afiadenyigba road / lagoon', lat: ddmToDd(6, 1.997, 'N'), lng: ddmToDd(0, 59.471, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Havedzi', desc: 'Havedzi bridge', lat: ddmToDd(5, 58.118, 'N'), lng: ddmToDd(0, 59.796, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Vodza', desc: 'Lagoon view hotel', lat: ddmToDd(5, 55.868, 'N'), lng: ddmToDd(0, 59.397, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Woe', desc: 'Woe landing bridge', lat: ddmToDd(5, 50.019, 'N'), lng: ddmToDd(0, 57.225, 'E'), type: 'Water' },
-            { region: 'keta', site: 'Anloga', desc: 'Anloga main market', lat: ddmToDd(5, 47.833, 'N'), lng: ddmToDd(0, 43.869, 'E'), type: 'Water' },
-            
-            // Ada/Songor Water Sampling
-            { region: 'ada', site: 'Azizanya', desc: 'Azizanya-Kewunor bridge', lat: ddmToDd(5, 46.259, 'N'), lng: ddmToDd(0, 39.185, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Ayigbo', desc: 'Ayigbo bridge', lat: ddmToDd(5, 46.371, 'N'), lng: ddmToDd(0, 38.447, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Patukope', desc: 'Patukope creek', lat: ddmToDd(5, 47.111, 'N'), lng: ddmToDd(0, 34.209, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Pute', desc: 'Pute walkway lagoon intake', lat: ddmToDd(5, 47.096, 'N'), lng: ddmToDd(0, 33.014, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Lagoon', desc: 'Lagoon underground seepage', lat: ddmToDd(5, 47.013, 'N'), lng: ddmToDd(0, 32.434, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Futuenya', desc: 'Furuenya creek, bridge', lat: ddmToDd(5, 47.212, 'N'), lng: ddmToDd(0, 37.253, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Big Ada', desc: 'Big Ada creek, bridge', lat: ddmToDd(5, 48.425, 'N'), lng: ddmToDd(0, 36.491, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Wasakuse', desc: 'Wasakusewayo, Restoration site', lat: ddmToDd(5, 50.321, 'N'), lng: ddmToDd(0, 33.316, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Togbloku', desc: 'Togbloku lagoon 1', lat: ddmToDd(5, 50.322, 'N'), lng: ddmToDd(0, 33.237, 'E'), type: 'Water' },
-            { region: 'ada', site: 'Obane', desc: 'Obane creek', lat: ddmToDd(5, 48.291, 'N'), lng: ddmToDd(0, 25.396, 'E'), type: 'Water' },
-
-             // Keta Soil Sampling
-            { region: 'keta', site: 'Anyanui', desc: 'Dead mangroves, Tunu road', lat: ddmToDd(5, 47.308, 'N'), lng: ddmToDd(0, 43.600, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Anyanui', desc: 'Tunu road', lat: ddmToDd(5, 47.366, 'N'), lng: ddmToDd(0, 43.609, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Agbledorne', desc: 'Agbledorne site 1', lat: ddmToDd(5, 47.174, 'N'), lng: ddmToDd(0, 45.226, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Agbledorne', desc: 'Agbledorne site 2', lat: ddmToDd(5, 47.146, 'N'), lng: ddmToDd(0, 45.215, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Agbledorne', desc: 'Agbledorne site 3', lat: ddmToDd(5, 47.086, 'N'), lng: ddmToDd(0, 45.176, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Dzita', desc: 'Dzita', lat: ddmToDd(5, 46.442, 'N'), lng: ddmToDd(0, 46.910, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Saviatula', desc: 'Saviatula bridge', lat: ddmToDd(5, 47.014, 'N'), lng: ddmToDd(0, 47.749, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Salo', desc: 'Salo road', lat: ddmToDd(5, 48.761, 'N'), lng: ddmToDd(0, 47.953, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Salo', desc: 'Salo mangrove market', lat: ddmToDd(5, 49.466, 'N'), lng: ddmToDd(0, 47.412, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Agortoe', desc: 'Agortoe', lat: ddmToDd(5, 51.700, 'N'), lng: ddmToDd(0, 45.274, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Agbatsivi', desc: 'Agbastivie', lat: ddmToDd(5, 52.636, 'N'), lng: ddmToDd(0, 43.788, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Galotse', desc: 'Galotse site 1', lat: ddmToDd(5, 52.021, 'N'), lng: ddmToDd(0, 42.560, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Galotse', desc: 'Galotse site 2', lat: ddmToDd(5, 51.947, 'N'), lng: ddmToDd(0, 42.269, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Galotse', desc: 'Galotse site 3', lat: ddmToDd(5, 52.818, 'N'), lng: ddmToDd(0, 41.392, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Genui', desc: 'Genui Road', lat: ddmToDd(5, 49.136, 'N'), lng: ddmToDd(0, 50.586, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Aborlorvie', desc: 'Upland fishing area', lat: ddmToDd(6, 1.600, 'N'), lng: ddmToDd(0, 55.831, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Aborlorvie', desc: 'further upland', lat: ddmToDd(6, 1.739, 'N'), lng: ddmToDd(0, 55.767, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Aborlorvie', desc: 'Proposed restoration site', lat: ddmToDd(6, 1.001, 'N'), lng: ddmToDd(0, 55.471, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Aborlorvie', desc: 'Proposed restoration site', lat: ddmToDd(6, 2.297, 'N'), lng: ddmToDd(0, 55.440, 'E'), type: 'Soil' },
-            { region: 'keta', site: 'Afidenyigba', desc: 'Afidenyigba bridge', lat: ddmToDd(6, 1.888, 'N'), lng: ddmToDd(0, 58.854, 'E'), type: 'Soil' },
-
-            // Ada/Songor Soil Sampling
-            { region: 'ada', site: 'Pute', desc: 'Pute walkway, lagoon intake, black mangroves', lat: ddmToDd(5, 47.082, 'N'), lng: ddmToDd(0, 32.585, 'E'), type: 'Soil' },
-            { region: 'ada', site: 'Pute', desc: 'lagoon, white mangroves', lat: ddmToDd(5, 47.070, 'N'), lng: ddmToDd(0, 33.027, 'E'), type: 'Soil' },
-            { region: 'ada', site: 'Wasakuse', desc: 'Wasakusengwa water near ponds', lat: ddmToDd(5, 50.338, 'N'), lng: ddmToDd(0, 33.322, 'E'), type: 'Soil' },
-            { region: 'ada', site: 'Obane', desc: 'obane restored mangrove', lat: ddmToDd(5, 48.338, 'N'), lng: ddmToDd(0, 33.322, 'E'), type: 'Soil' }
+            { region:'keta', site:'Anyanui', desc:'Anyanui landing site', lat:ddmToDd(5,47.012,'N'), lng:ddmToDd(0,43.276,'E'), type:'Water' },
+            { region:'keta', site:'Fuveme', desc:'Fuveme creek', lat:ddmToDd(5,46.564,'N'), lng:ddmToDd(0,43.921,'E'), type:'Water' },
+            { region:'keta', site:'Agorkedzi', desc:'Agorkedzi creek', lat:ddmToDd(5,46.704,'N'), lng:ddmToDd(0,42.476,'E'), type:'Water' },
+            { region:'keta', site:'Tunu', desc:'Tunu creek', lat:ddmToDd(5,47.571,'N'), lng:ddmToDd(0,43.140,'E'), type:'Water' },
+            { region:'keta', site:'Anyanui', desc:'Anyanui - Tunu road', lat:ddmToDd(5,47.308,'N'), lng:ddmToDd(0,43.600,'E'), type:'Water' },
+            { region:'keta', site:'Anyanui', desc:'Anyanui - Tunu road', lat:ddmToDd(5,47.366,'N'), lng:ddmToDd(0,43.609,'E'), type:'Water' },
+            { region:'keta', site:'Agbledome', desc:'Agbledome', lat:ddmToDd(5,47.195,'N'), lng:ddmToDd(0,45.235,'E'), type:'Water' },
+            { region:'keta', site:'Dzita', desc:'Dzita', lat:ddmToDd(5,46.442,'N'), lng:ddmToDd(0,46.910,'E'), type:'Water' },
+            { region:'keta', site:'Akplotorkor', desc:'Akplotorkor sites 1', lat:ddmToDd(5,46.359,'N'), lng:ddmToDd(0,47.451,'E'), type:'Water' },
+            { region:'keta', site:'Akplotorkor', desc:'Akplotorkor site 2', lat:ddmToDd(5,46.383,'N'), lng:ddmToDd(0,48.621,'E'), type:'Water' },
+            { region:'keta', site:'Saviatula', desc:'Saviatula Bridge', lat:ddmToDd(5,46.957,'N'), lng:ddmToDd(0,49.803,'E'), type:'Water' },
+            { region:'keta', site:'Salo', desc:'Salo road', lat:ddmToDd(5,48.761,'N'), lng:ddmToDd(0,47.953,'E'), type:'Water' },
+            { region:'keta', site:'Salo', desc:'salo mangrove market', lat:ddmToDd(5,49.464,'N'), lng:ddmToDd(0,47.405,'E'), type:'Water' },
+            { region:'keta', site:'Agortoe', desc:'Agortoe site 1', lat:ddmToDd(5,51.700,'N'), lng:ddmToDd(0,45.274,'E'), type:'Water' },
+            { region:'keta', site:'Agortoe', desc:'Agortoe site 2', lat:ddmToDd(5,51.786,'N'), lng:ddmToDd(0,45.176,'E'), type:'Water' },
+            { region:'keta', site:'Agbatsivi', desc:'Agbastivi site 1', lat:ddmToDd(5,51.977,'N'), lng:ddmToDd(0,44.884,'E'), type:'Water' },
+            { region:'keta', site:'Agbatsivi', desc:'Agbastivi site 2', lat:ddmToDd(5,52.124,'N'), lng:ddmToDd(0,44.733,'E'), type:'Water' },
+            { region:'keta', site:'Galotse', desc:'Galoste site 1', lat:ddmToDd(5,52.021,'N'), lng:ddmToDd(0,42.560,'E'), type:'Water' },
+            { region:'keta', site:'Galotse', desc:'Galoste site 2', lat:ddmToDd(5,52.818,'N'), lng:ddmToDd(0,41.397,'E'), type:'Water' },
+            { region:'keta', site:'Genui', desc:'Gehnui Road', lat:ddmToDd(5,59.136,'N'), lng:ddmToDd(0,50.586,'E'), type:'Water' },
+            { region:'keta', site:'Afiadenyigba', desc:'Afiadenyigba bridge', lat:ddmToDd(6,1.888,'N'), lng:ddmToDd(0,58.854,'E'), type:'Water' },
+            { region:'keta', site:'Afiadenyigba', desc:'Afiadenyigba road / lagoon', lat:ddmToDd(6,1.997,'N'), lng:ddmToDd(0,59.471,'E'), type:'Water' },
+            { region:'keta', site:'Havedzi', desc:'Havedzi bridge', lat:ddmToDd(5,58.118,'N'), lng:ddmToDd(0,59.796,'E'), type:'Water' },
+            { region:'keta', site:'Vodza', desc:'Lagoon view hotel', lat:ddmToDd(5,55.868,'N'), lng:ddmToDd(0,59.397,'E'), type:'Water' },
+            { region:'keta', site:'Woe', desc:'Woe landing bridge', lat:ddmToDd(5,50.019,'N'), lng:ddmToDd(0,57.225,'E'), type:'Water' },
+            { region:'keta', site:'Anloga', desc:'Anloga main market', lat:ddmToDd(5,47.833,'N'), lng:ddmToDd(0,43.869,'E'), type:'Water' },
+            { region:'ada', site:'Azizanya', desc:'Azizanya-Kewunor bridge', lat:ddmToDd(5,46.259,'N'), lng:ddmToDd(0,39.185,'E'), type:'Water' },
+            { region:'ada', site:'Ayigbo', desc:'Ayigbo bridge', lat:ddmToDd(5,46.371,'N'), lng:ddmToDd(0,38.447,'E'), type:'Water' },
+            { region:'ada', site:'Patukope', desc:'Patukope creek', lat:ddmToDd(5,47.111,'N'), lng:ddmToDd(0,34.209,'E'), type:'Water' },
+            { region:'ada', site:'Pute', desc:'Pute walkway lagoon intake', lat:ddmToDd(5,47.096,'N'), lng:ddmToDd(0,33.014,'E'), type:'Water' },
+            { region:'ada', site:'Lagoon', desc:'Lagoon underground seepage', lat:ddmToDd(5,47.013,'N'), lng:ddmToDd(0,32.434,'E'), type:'Water' },
+            { region:'ada', site:'Futuenya', desc:'Furuenya creek, bridge', lat:ddmToDd(5,47.212,'N'), lng:ddmToDd(0,37.253,'E'), type:'Water' },
+            { region:'ada', site:'Big Ada', desc:'Big Ada creek, bridge', lat:ddmToDd(5,48.425,'N'), lng:ddmToDd(0,36.491,'E'), type:'Water' },
+            { region:'ada', site:'Wasakuse', desc:'Wasakusewayo, Restoration site', lat:ddmToDd(5,50.321,'N'), lng:ddmToDd(0,33.316,'E'), type:'Water' },
+            { region:'ada', site:'Togbloku', desc:'Togbloku lagoon 1', lat:ddmToDd(5,50.322,'N'), lng:ddmToDd(0,33.237,'E'), type:'Water' },
+            { region:'ada', site:'Obane', desc:'Obane creek', lat:ddmToDd(5,48.291,'N'), lng:ddmToDd(0,25.396,'E'), type:'Water' },
+            { region:'keta', site:'Anyanui', desc:'Dead mangroves, Tunu road', lat:ddmToDd(5,47.308,'N'), lng:ddmToDd(0,43.600,'E'), type:'Soil' },
+            { region:'keta', site:'Anyanui', desc:'Tunu road', lat:ddmToDd(5,47.366,'N'), lng:ddmToDd(0,43.609,'E'), type:'Soil' },
+            { region:'keta', site:'Agbledorne', desc:'Agbledorne site 1', lat:ddmToDd(5,47.174,'N'), lng:ddmToDd(0,45.226,'E'), type:'Soil' },
+            { region:'keta', site:'Agbledorne', desc:'Agbledorne site 2', lat:ddmToDd(5,47.146,'N'), lng:ddmToDd(0,45.215,'E'), type:'Soil' },
+            { region:'keta', site:'Agbledorne', desc:'Agbledorne site 3', lat:ddmToDd(5,47.086,'N'), lng:ddmToDd(0,45.176,'E'), type:'Soil' },
+            { region:'keta', site:'Dzita', desc:'Dzita', lat:ddmToDd(5,46.442,'N'), lng:ddmToDd(0,46.910,'E'), type:'Soil' },
+            { region:'keta', site:'Saviatula', desc:'Saviatula bridge', lat:ddmToDd(5,47.014,'N'), lng:ddmToDd(0,47.749,'E'), type:'Soil' },
+            { region:'keta', site:'Salo', desc:'Salo road', lat:ddmToDd(5,48.761,'N'), lng:ddmToDd(0,47.953,'E'), type:'Soil' },
+            { region:'keta', site:'Salo', desc:'Salo mangrove market', lat:ddmToDd(5,49.466,'N'), lng:ddmToDd(0,47.412,'E'), type:'Soil' },
+            { region:'keta', site:'Agortoe', desc:'Agortoe', lat:ddmToDd(5,51.700,'N'), lng:ddmToDd(0,45.274,'E'), type:'Soil' },
+            { region:'keta', site:'Agbatsivi', desc:'Agbastivie', lat:ddmToDd(5,52.636,'N'), lng:ddmToDd(0,43.788,'E'), type:'Soil' },
+            { region:'keta', site:'Galotse', desc:'Galotse site 1', lat:ddmToDd(5,52.021,'N'), lng:ddmToDd(0,42.560,'E'), type:'Soil' },
+            { region:'keta', site:'Galotse', desc:'Galotse site 2', lat:ddmToDd(5,51.947,'N'), lng:ddmToDd(0,42.269,'E'), type:'Soil' },
+            { region:'keta', site:'Galotse', desc:'Galotse site 3', lat:ddmToDd(5,52.818,'N'), lng:ddmToDd(0,41.392,'E'), type:'Soil' },
+            { region:'keta', site:'Genui', desc:'Genui Road', lat:ddmToDd(5,49.136,'N'), lng:ddmToDd(0,50.586,'E'), type:'Soil' },
+            { region:'keta', site:'Aborlorvie', desc:'Upland fishing area', lat:ddmToDd(6,1.600,'N'), lng:ddmToDd(0,55.831,'E'), type:'Soil' },
+            { region:'keta', site:'Aborlorvie', desc:'further upland', lat:ddmToDd(6,1.739,'N'), lng:ddmToDd(0,55.767,'E'), type:'Soil' },
+            { region:'keta', site:'Aborlorvie', desc:'Proposed restoration site', lat:ddmToDd(6,1.001,'N'), lng:ddmToDd(0,55.471,'E'), type:'Soil' },
+            { region:'keta', site:'Aborlorvie', desc:'Proposed restoration site', lat:ddmToDd(6,2.297,'N'), lng:ddmToDd(0,55.440,'E'), type:'Soil' },
+            { region:'keta', site:'Afidenyigba', desc:'Afidenyigba bridge', lat:ddmToDd(6,1.888,'N'), lng:ddmToDd(0,58.854,'E'), type:'Soil' },
+            { region:'ada', site:'Pute', desc:'Pute walkway, lagoon intake, black mangroves', lat:ddmToDd(5,47.082,'N'), lng:ddmToDd(0,32.585,'E'), type:'Soil' },
+            { region:'ada', site:'Pute', desc:'lagoon, white mangroves', lat:ddmToDd(5,47.070,'N'), lng:ddmToDd(0,33.027,'E'), type:'Soil' },
+            { region:'ada', site:'Wasakuse', desc:'Wasakusengwa water near ponds', lat:ddmToDd(5,50.338,'N'), lng:ddmToDd(0,33.322,'E'), type:'Soil' },
+            { region:'ada', site:'Obane', desc:'obane restored mangrove', lat:ddmToDd(5,48.338,'N'), lng:ddmToDd(0,33.322,'E'), type:'Soil' }
         ];
 
-        // Initialize Map
+        // ─── Map Init ───────────────────────────────────────────────
         const map = L.map('map', { zoomControl: false }).setView([5.85, 0.75], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Core Basemaps
-        const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; CARTO | Data: GAB Ltd',
-            subdomains: 'abcd',
-            maxZoom: 20
-        });
-
-        const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-            maxZoom: 18
-        });
-
-        // Set default map
+        const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO | GAB Ltd', subdomains: 'abcd', maxZoom: 20 });
+        const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 18 });
         cartoLight.addTo(map);
 
-        // Custom Leaflet Control for Basemap Toggle
+        // Basemap Toggle
         L.Control.BasemapToggle = L.Control.extend({
             onAdd: function(map) {
-                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-                
-                container.style.backgroundColor = 'var(--glass-bg)';
-                container.style.backdropFilter = 'blur(12px)';
-                container.style.webkitBackdropFilter = 'blur(12px)';
-                container.style.border = '1px solid var(--glass-border)';
-                container.style.borderRadius = '50px';
-                container.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
-                container.style.padding = '8px 16px';
-                container.style.cursor = 'pointer';
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
-                container.style.gap = '8px';
-                container.style.fontWeight = '600';
-                container.style.fontSize = '0.85rem';
-                container.style.color = 'var(--dark)';
-                container.style.transition = 'all 0.3s ease';
-
-                container.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
-                    <span>Satellite View</span>
-                `;
-
-                container.onmouseover = function(){
-                    container.style.backgroundColor = '#fff';
-                    container.style.color = 'var(--primary)';
-                }
-                container.onmouseout = function(){
-                    container.style.backgroundColor = 'var(--glass-bg)';
-                    container.style.color = 'var(--dark)';
-                }
-
-                let currentBasemap = 'light';
-                container.onclick = function(){
-                    const span = container.querySelector('span');
-                    if (currentBasemap === 'light') {
-                        map.removeLayer(cartoLight);
-                        esriSatellite.addTo(map);
-                        span.innerText = 'Map View';
-                        currentBasemap = 'satellite';
-                    } else {
-                        map.removeLayer(esriSatellite);
-                        cartoLight.addTo(map);
-                        span.innerText = 'Satellite View';
-                        currentBasemap = 'light';
-                    }
-                }
-
-                return container;
+                const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                Object.assign(c.style, { backgroundColor:'var(--glass-bg)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid var(--glass-border)', borderRadius:'50px', boxShadow:'0 10px 25px rgba(0,0,0,0.15)', padding:'8px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:'8px', fontWeight:'600', fontSize:'0.85rem', color:'var(--dark)', transition:'all 0.3s ease', fontFamily:'Inter,sans-serif' });
+                c.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg><span>Satellite View</span>';
+                c.onmouseover = () => { c.style.backgroundColor='#fff'; c.style.color='var(--primary)'; };
+                c.onmouseout = () => { c.style.backgroundColor='var(--glass-bg)'; c.style.color='var(--dark)'; };
+                let cur = 'light';
+                c.onclick = () => {
+                    const span = c.querySelector('span');
+                    if (cur === 'light') { map.removeLayer(cartoLight); esriSatellite.addTo(map); span.innerText='Map View'; cur='satellite'; }
+                    else { map.removeLayer(esriSatellite); cartoLight.addTo(map); span.innerText='Satellite View'; cur='light'; }
+                };
+                L.DomEvent.disableClickPropagation(c);
+                return c;
             }
         });
-
-        // Add to top right
         new L.Control.BasemapToggle({ position: 'topright' }).addTo(map);
 
-        // Icons
-        const createIcon = (color) => {
-            return L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color:${color};width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 3px 6px rgba(0,0,0,0.3);"></div>`,
-                iconSize: [18, 18],
-                iconAnchor: [9, 9]
-            });
-        };
-
-        const mangrovePointIcon = L.divIcon({
+        // ─── Icons ──────────────────────────────────────────────────
+        const mkIcon = (color, shape) => L.divIcon({
             className: 'custom-div-icon',
-            html: `<div style="background-color:var(--tertiary);width:10px;height:10px;border-radius:50%;border:1px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            html: shape === 'diamond'
+                ? `<div style="background:${color};width:12px;height:12px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);transform:rotate(45deg);"></div>`
+                : `<div style="background:${color};width:${shape==='sm'?10:14}px;height:${shape==='sm'?10:14}px;border-radius:50%;border:2px solid white;box-shadow:0 3px 6px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [18,18], iconAnchor: [9,9]
         });
 
-        const ketaIcon = createIcon('var(--primary)');
-        const adaIcon = createIcon('var(--secondary)');
+        const ketaIcon    = mkIcon('var(--primary)','lg');
+        const adaIcon     = mkIcon('var(--secondary)','lg');
+        const mangroveIcon= mkIcon('var(--tertiary)','sm');
+        const carbonIcon  = mkIcon('#8E44AD','diamond');
+        const coastalIcon = mkIcon('var(--coastal)','lg');
+        const userIcon    = mkIcon('var(--user)','lg');
 
-        // Map Layers
+        // ─── Layer Management ────────────────────────────────────────
         const mapLayers = [];
-        let ketaCount = 0;
-        let adaCount = 0;
-        let mangrovePtCount = 0;
-        let mangrovePolyCount = 0;
-        let carbonCount = 0;
+        const userLayers = {}; // id -> layer (for deletion)
+        let ketaCount=0, adaCount=0, mangrovePtCount=0, mangrovePolyCount=0, carbonCount=0, coastalCount=0;
 
-        // 1. Plot Ecological Health Sites
-        samplingData.forEach(data => {
-            if(data.lat && data.lng) {
-                const icon = data.region === 'keta' ? ketaIcon : adaIcon;
-                if(data.region === 'keta') ketaCount++;
-                if(data.region === 'ada') adaCount++;
+        function addLayer(layer, category) {
+            layer.category = category;
+            layer.addTo(map);
+            mapLayers.push(layer);
+        }
 
-                const marker = L.marker([data.lat, data.lng], { icon: icon }).addTo(map);
-                
-                const popupContent = `
-                    <div class="custom-popup">
-                        <h3>${data.site}</h3>
-                        <p>${data.desc}</p>
-                        <p style="color: #888; font-size: 0.8rem; margin-top: 8px;">Lat: ${data.lat.toFixed(4)}, Lng: ${data.lng.toFixed(4)}</p>
-                        <span class="badge">Eco Health - ${data.type} Sample</span>
-                    </div>
-                `;
-                
-                marker.bindPopup(popupContent);
-                marker.category = 'health';
-                mapLayers.push(marker);
-            }
+        // ─── 1. Eco Health ──────────────────────────────────────────
+        samplingData.forEach(d => {
+            if (!d.lat || !d.lng) return;
+            const icon = d.region === 'keta' ? ketaIcon : adaIcon;
+            if (d.region === 'keta') ketaCount++; else adaCount++;
+            const m = L.marker([d.lat, d.lng], { icon });
+            m.bindPopup(`<div class="custom-popup"><h3>${d.site}</h3><p>${d.desc}</p><p style="color:#888;font-size:0.78rem">Lat:${d.lat.toFixed(4)}, Lng:${d.lng.toFixed(4)}</p><span class="badge">Eco Health — ${d.type}</span></div>`);
+            addLayer(m, 'health');
         });
 
-        // 2. Plot Mangrove Extent Points (from gis_data.js)
-        if(typeof gisPoints !== 'undefined') {
-            gisPoints.forEach(data => {
-                if(data.lat && data.lng) {
-                    mangrovePtCount++;
-                    const marker = L.marker([data.lat, data.lng], { icon: mangrovePointIcon }).addTo(map);
-                    
-                    const popupContent = `
-                        <div class="custom-popup mangrove">
-                            <h3>${data.name}</h3>
-                            <p>${data.desc}</p>
-                            <p style="color: #888; font-size: 0.8rem; margin-top: 8px;">Lat: ${data.lat.toFixed(4)}, Lng: ${data.lng.toFixed(4)}</p>
-                            <span class="badge mangrove">Mangrove Extent Baseline</span>
-                        </div>
-                    `;
-                    
-                    marker.bindPopup(popupContent);
-                    marker.category = 'mangrove';
-                    marker._storedLatLng = L.latLng(data.lat, data.lng);
-                    mapLayers.push(marker);
-                }
+        // ─── 2. Mangrove Points ──────────────────────────────────────
+        if (typeof gisPoints !== 'undefined') {
+            gisPoints.forEach(d => {
+                if (!d.lat || !d.lng) return;
+                mangrovePtCount++;
+                const m = L.marker([d.lat, d.lng], { icon: mangroveIcon });
+                m.bindPopup(`<div class="custom-popup mangrove"><h3>${d.name}</h3><p>${d.desc}</p><p style="color:#888;font-size:0.78rem">Lat:${d.lat.toFixed(4)}, Lng:${d.lng.toFixed(4)}</p><span class="badge mangrove">Mangrove Extent Baseline</span></div>`);
+                m._storedLatLng = L.latLng(d.lat, d.lng);
+                addLayer(m, 'mangrove');
             });
         }
 
-        // 3. Plot Mangrove Extent Polygons (from gis_data.js)
+        // ─── 3. Mangrove Polygons ────────────────────────────────────
         if (typeof gisPolygons !== 'undefined') {
             gisPolygons.forEach(poly => {
                 try {
                     mangrovePolyCount++;
-                    
-                    // Use the already parsed GeoJSON object
-                    const geojsonData = poly.geojson;
-                    
-                    const geojsonLayer = L.geoJSON(geojsonData, {
-                        style: {
-                            color: '#E67E22', // Use hex directly for SVG compatibility
-                            weight: 2,
-                            opacity: 1,
-                            fillColor: '#E67E22',
-                            fillOpacity: 0.3
-                        },
-                        onEachFeature: function (feature, layer) {
-                            const popupContent = `
-                                <div class="custom-popup mangrove">
-                                    <h3>${poly.name}</h3>
-                                    <p>Used for GIS Mangrove Extent Baselines</p>
-                                    <p style="color: #888; font-size: 0.8rem; margin-top: 8px;">Source file: ${poly.fileName}</p>
-                                    <span class="badge mangrove">Mangrove Extent Polygon</span>
-                                </div>
-                            `;
-                            layer.bindPopup(popupContent);
-                        }
+                    const layer = L.geoJSON(poly.geojson, {
+                        style: { color:'#E67E22', weight:2, opacity:1, fillColor:'#E67E22', fillOpacity:0.3 },
+                        onEachFeature: (f, l) => l.bindPopup(`<div class="custom-popup mangrove"><h3>${poly.name}</h3><p>Mangrove Extent Baseline polygon</p><p style="color:#888;font-size:0.78rem">Source: ${poly.fileName}</p><span class="badge mangrove">Mangrove Extent Polygon</span></div>`)
                     }).addTo(map);
-
-                    // Safely store bounds from Leaflet's parser
-                    const layerBounds = geojsonLayer.getBounds();
-                    if (layerBounds.isValid()) {
-                        // Check for suspiciously large bounds (world scale)
-                        const sw = layerBounds.getSouthWest();
-                        const ne = layerBounds.getNorthEast();
-                        if (sw.lat < -80 || ne.lat > 80 || sw.lng < -170 || ne.lng > 170) {
-                            console.error("WARNING: Polygon " + poly.name + " generated world-scale bounds:", sw, ne);
-                        } else {
-                            geojsonLayer._storedBounds = layerBounds;
-                        }
-                    } else {
-                        console.warn("Polygon " + poly.name + " returned invalid bounds.");
+                    layer.category = 'mangrove';
+                    const b = layer.getBounds();
+                    if (b.isValid()) {
+                        const sw=b.getSouthWest(), ne=b.getNorthEast();
+                        if (sw.lat>-80 && ne.lat<80 && sw.lng>-170 && ne.lng<170) layer._storedBounds = b;
                     }
-                    mapLayers.push(geojsonLayer);
-                } catch (e) {
-                    console.error("Error drawing polygon " + poly.name, e);
-                }
+                    mapLayers.push(layer);
+                } catch(e) { console.error('Polygon error:', poly.name, e); }
             });
         }
 
-        // 4. Plot Carbon Inventory Points (from carbon_data.js)
+        // ─── 4. Carbon Inventory ────────────────────────────────────
         if (typeof carbonInventoryPoints !== 'undefined') {
-            const carbonIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color:#8E44AD;width:12px;height:12px;border-radius:3px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);transform:rotate(45deg);"></div>`,
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
-            });
-
-            carbonInventoryPoints.forEach(data => {
-                if (data.lat && data.lng) {
-                    carbonCount++;
-                    const marker = L.marker([data.lat, data.lng], { icon: carbonIcon }).addTo(map);
-
-                    const popupContent = `
-                        <div class="custom-popup carbon">
-                            <h3>${data.plotId || data.community}</h3>
-                            <p><strong>Site:</strong> ${data.site} — ${data.region}</p>
-                            <p><strong>Community:</strong> ${data.community}</p>
-                            <p><strong>Land Cover:</strong> ${data.landCover}</p>
-                            <p style="color: #888; font-size: 0.8rem; margin-top: 8px;">Lat: ${data.lat.toFixed(5)}, Lng: ${data.lng.toFixed(5)}</p>
-                            <span class="badge carbon">Carbon Inventory</span>
-                        </div>
-                    `;
-
-                    marker.bindPopup(popupContent);
-                    marker.category = 'carbon';
-                    mapLayers.push(marker);
-                }
+            carbonInventoryPoints.forEach(d => {
+                if (!d.lat || !d.lng) return;
+                carbonCount++;
+                const m = L.marker([d.lat, d.lng], { icon: carbonIcon });
+                m.bindPopup(`<div class="custom-popup carbon"><h3>${d.plotId || d.community}</h3><p><strong>Site:</strong> ${d.site} — ${d.region}</p><p><strong>Community:</strong> ${d.community}</p><p><strong>Land Cover:</strong> ${d.landCover}</p><p style="color:#888;font-size:0.78rem">Lat:${d.lat.toFixed(5)}, Lng:${d.lng.toFixed(5)}</p><span class="badge carbon">Carbon Inventory</span></div>`);
+                addLayer(m, 'carbon');
             });
         }
 
-        // Force execution of stats update dynamically
+        // ─── 5. Coastal Ecosystem ───────────────────────────────────
+        if (typeof coastalPoints !== 'undefined') {
+            coastalPoints.forEach(d => {
+                if (!d.lat || !d.lng) return;
+                coastalCount++;
+                const m = L.marker([d.lat, d.lng], { icon: coastalIcon });
+                m.bindPopup(`<div class="custom-popup coastal"><h3>${d.name}</h3><p>${d.desc}</p><p><strong>Type:</strong> ${d.ecosystem_type}</p><p style="color:#888;font-size:0.78rem">Lat:${d.lat.toFixed(4)}, Lng:${d.lng.toFixed(4)}</p><span class="badge coastal">Coastal Ecosystem</span></div>`);
+                m._coastalData = d;
+                addLayer(m, 'coastal');
+            });
+        }
+
+        if (typeof coastalPolygons !== 'undefined') {
+            coastalPolygons.forEach(poly => {
+                try {
+                    coastalCount++;
+                    const layer = L.geoJSON(poly.geojson, {
+                        style: { color:'#00897B', weight:2, opacity:1, fillColor:'#00897B', fillOpacity:0.25 },
+                        onEachFeature: (f, l) => l.bindPopup(`<div class="custom-popup coastal"><h3>${poly.name}</h3><p>${poly.desc}</p><p><strong>Type:</strong> ${poly.ecosystem_type}</p><p><strong>Site:</strong> ${poly.site}</p><span class="badge coastal">Coastal Ecosystem</span></div>`)
+                    }).addTo(map);
+                    layer.category = 'coastal';
+                    mapLayers.push(layer);
+                } catch(e) { console.error('Coastal polygon error:', poly.name, e); }
+            });
+        }
+
+        // ─── Update stats ────────────────────────────────────────────
+        document.getElementById('keta-count').innerText          = ketaCount;
+        document.getElementById('ada-count').innerText           = adaCount;
+        document.getElementById('mangrove-pt-count').innerText   = mangrovePtCount;
+        document.getElementById('mangrove-poly-count').innerText = mangrovePolyCount;
+        document.getElementById('carbon-count').innerText        = carbonCount;
+        document.getElementById('coastal-count').innerText       = coastalCount;
+
+        // ─── Initial bounds fit ──────────────────────────────────────
         try {
-            console.log("Updating stats:", ketaCount, adaCount, mangrovePtCount, mangrovePolyCount, carbonCount);
-            document.getElementById('keta-count').innerText = ketaCount.toString();
-            document.getElementById('ada-count').innerText = adaCount.toString();
-            document.getElementById('mangrove-pt-count').innerText = mangrovePtCount.toString();
-            document.getElementById('mangrove-poly-count').innerText = mangrovePolyCount.toString();
-            document.getElementById('carbon-count').innerText = carbonCount.toString();
-        } catch (e) {
-            console.error("Error updating stats", e);
-        }
-
-        // Auto-fit bounds on load across all layers
-        try {
-            const initBounds = L.latLngBounds([]);
-            mapLayers.forEach(layer => {
-                if (layer.getLatLng) {
-                    initBounds.extend(layer.getLatLng());
-                } else if (layer.getBounds) {
-                    const lb = layer.getBounds();
-                    if (lb.isValid()) initBounds.extend(lb);
-                }
+            const bounds = L.latLngBounds([]);
+            mapLayers.forEach(l => {
+                if (l.getLatLng) bounds.extend(l.getLatLng());
+                else if (l.getBounds) { const b=l.getBounds(); if(b.isValid()) bounds.extend(b); }
             });
-            if (initBounds.isValid()) {
-                map.fitBounds(initBounds, { padding: [50, 50] });
-            }
-        } catch(e) {
-            console.error("Error setting initial bounds", e);
-        }
+            if (bounds.isValid()) map.fitBounds(bounds, { padding:[50,50] });
+        } catch(e) {}
 
-        // Filter Logic
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-
-                const filter = e.target.getAttribute('data-filter');
-                let visibleLayers = [];
-
-                mapLayers.forEach(layer => {
-                    map.removeLayer(layer); // Hide all
-                    if (filter === 'all' || layer.category === filter) {
-                        layer.addTo(map); // Show matching
-                        visibleLayers.push(layer);
-                    }
+        // ─── Filter logic ────────────────────────────────────────────
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.getAttribute('data-filter');
+                const visible = [];
+                mapLayers.forEach(l => {
+                    map.removeLayer(l);
+                    if (filter === 'all' || l.category === filter) { l.addTo(map); visible.push(l); }
                 });
+                // Also manage drawn items
+                if (filter === 'all' || filter === 'user') drawnItems.addTo(map);
+                else map.removeLayer(drawnItems);
 
-                // Reposition map bounds — use stored values for reliability
-                if (visibleLayers.length > 0) {
+                if (visible.length > 0) {
                     try {
                         const bounds = L.latLngBounds([]);
-                        visibleLayers.forEach(layer => {
-                            if (layer._storedLatLng) {
-                                bounds.extend(layer._storedLatLng);
-                            } else if (layer._storedBounds && layer._storedBounds.isValid()) {
-                                bounds.extend(layer._storedBounds);
-                            } else if (layer.getLatLng) {
-                                bounds.extend(layer.getLatLng());
-                            } else if (layer.getBounds) {
-                                const lb = layer.getBounds();
-                                if (lb.isValid()) bounds.extend(lb);
-                            }
+                        visible.forEach(l => {
+                            if (l._storedLatLng) bounds.extend(l._storedLatLng);
+                            else if (l._storedBounds && l._storedBounds.isValid()) bounds.extend(l._storedBounds);
+                            else if (l.getLatLng) bounds.extend(l.getLatLng());
+                            else if (l.getBounds) { const b=l.getBounds(); if(b.isValid()) bounds.extend(b); }
                         });
-                        if (bounds.isValid()) {
-                            map.flyToBounds(bounds, { padding: [100, 100], duration: 1.5 });
-                        }
-                    } catch (e) {
-                        console.error("Error computing bounds", e);
-                    }
+                        if (bounds.isValid()) map.flyToBounds(bounds, { padding:[100,100], duration:1.5 });
+                    } catch(e) {}
                 }
             });
         });
 
-        // Initialize User Data Layer
+        // ─── Drawing Tools ───────────────────────────────────────────
         const drawnItems = new L.FeatureGroup().addTo(map);
         let tempFeature = null;
 
-        // Leaflet.draw Control
         const drawControl = new L.Control.Draw({
             position: 'topright',
-            edit: {
-                featureGroup: drawnItems
-            },
+            edit: { featureGroup: drawnItems },
             draw: {
-                polygon: {
-                    allowIntersection: false,
-                    showArea: true,
-                    shapeOptions: { color: '#2e7d32' }
-                },
+                polygon: { allowIntersection:false, showArea:true, shapeOptions:{ color:'#1565C0' } },
                 marker: true,
-                polyline: false,
-                circle: false,
-                rectangle: false,
-                circlemarker: false
+                polyline: false, circle: false, rectangle: false, circlemarker: false
             }
         });
         map.addControl(drawControl);
 
-        // Feature Creation Handling
-        map.on(L.Draw.Event.CREATED, function (e) {
-            tempFeature = e.layer;
-            openModal();
-        });
+        map.on(L.Draw.Event.CREATED, e => { tempFeature = e.layer; openModal(); });
 
         function openModal() {
             document.getElementById('feature-modal').style.display = 'flex';
@@ -993,77 +652,326 @@
             document.getElementById('feature-modal').style.display = 'none';
             document.getElementById('feature-name').value = '';
             document.getElementById('feature-desc').value = '';
+            document.getElementById('saving-indicator').style.display = 'none';
             tempFeature = null;
         }
 
-        function saveFeature() {
-            const name = document.getElementById('feature-name').value || 'Unnamed Feature';
-            const desc = document.getElementById('feature-desc').value || '';
-            
-            if (tempFeature) {
-                // Add metadata to the layer
-                tempFeature.feature = tempFeature.feature || { type: 'Feature', properties: {} };
-                tempFeature.feature.properties.name = name;
-                tempFeature.feature.properties.description = desc;
-                tempFeature.feature.properties.category = 'user-added';
+        async function saveFeature() {
+            const name     = document.getElementById('feature-name').value.trim() || 'Unnamed Feature';
+            const desc     = document.getElementById('feature-desc').value.trim();
+            const category = document.getElementById('feature-category').value;
 
-                let areaInfo = '';
-                if (tempFeature instanceof L.Polygon) {
-                    const latlngs = tempFeature.getLatLngs()[0];
-                    const areaSqM = L.GeometryUtil.geodesicArea(latlngs);
-                    const areaHectares = (areaSqM / 10000).toFixed(2);
-                    tempFeature.feature.properties.area_hectares = areaHectares;
-                    areaInfo = `<p><strong>Area:</strong> ${areaHectares} hectares</p>`;
-                }
+            if (!tempFeature) return;
 
-                // Setup Popup
-                const popupContent = `
-                    <div class="custom-popup">
-                        <h3 style="color: #2e7d32;">${name}</h3>
-                        ${areaInfo}
-                        <p>${desc}</p>
-                        <span class="badge" style="background: rgba(46, 125, 50, 0.1); color: #2e7d32;">User Added</span>
-                    </div>
-                `;
-                tempFeature.bindPopup(popupContent);
-                drawnItems.addLayer(tempFeature);
+            const isPolygon = tempFeature instanceof L.Polygon;
+            const featureType = isPolygon ? 'polygon' : 'point';
+            let areaHectares = null;
+            let areaInfo = '';
+
+            if (isPolygon) {
+                const latlngs = tempFeature.getLatLngs()[0];
+                areaHectares = parseFloat((L.GeometryUtil.geodesicArea(latlngs) / 10000).toFixed(4));
+                areaInfo = `<p><strong>Area:</strong> ${areaHectares} ha</p>`;
             }
+
+            tempFeature.feature = tempFeature.feature || { type:'Feature', properties:{} };
+            tempFeature.feature.properties = { name, description:desc, category, area_hectares:areaHectares };
+
+            const geojson = tempFeature.toGeoJSON();
+            const color = category === 'coastal' ? '#00897B' : '#1565C0';
+            const badgeClass = category === 'coastal' ? 'coastal' : 'user';
+            const badgeLabel = category === 'coastal' ? 'Coastal Ecosystem' : 'User Added';
+
+            tempFeature.bindPopup(`
+                <div class="custom-popup ${badgeClass}">
+                    <h3>${name}</h3>
+                    ${areaInfo}
+                    <p>${desc}</p>
+                    <span class="badge ${badgeClass}">${badgeLabel}</span>
+                </div>
+            `);
+
+            drawnItems.addLayer(tempFeature);
+
+            // Save to Supabase
+            document.getElementById('saving-indicator').style.display = 'block';
+            try {
+                const { data, error } = await db.from('user_features').insert({
+                    name,
+                    description: desc || null,
+                    feature_type: featureType,
+                    geojson: geojson.geometry,
+                    area_hectares: areaHectares
+                }).select().single();
+
+                if (error) throw error;
+
+                // Tag layer with DB id for deletion
+                tempFeature._dbId = data.id;
+                userLayers[data.id] = tempFeature;
+
+                // Update user count
+                const cur = parseInt(document.getElementById('user-count').innerText) || 0;
+                document.getElementById('user-count').innerText = cur + 1;
+
+                // Refresh user table
+                await loadUserFeaturesTable();
+            } catch(err) {
+                console.error('Supabase save error:', err);
+                // Still works locally even if DB save fails
+            }
+
             closeModal();
         }
 
-        // Export Functionality (KML)
+        // ─── Load User Features from Supabase on startup ─────────────
+        async function loadUserFeaturesFromDB() {
+            try {
+                const { data, error } = await db.from('user_features').select('*').order('created_at', { ascending:false });
+                if (error) throw error;
+
+                data.forEach(row => {
+                    try {
+                        const layer = L.geoJSON({ type:'Feature', geometry:row.geojson, properties:{ name:row.name, description:row.description } }, {
+                            style: { color:'#1565C0', weight:2, fillColor:'#1565C0', fillOpacity:0.3 },
+                            pointToLayer: (f, latlng) => L.marker(latlng, { icon: userIcon })
+                        });
+
+                        const areaInfo = row.area_hectares ? `<p><strong>Area:</strong> ${row.area_hectares} ha</p>` : '';
+                        layer.bindPopup(`<div class="custom-popup user"><h3>${row.name}</h3>${areaInfo}<p>${row.description || ''}</p><p style="color:#888;font-size:0.78rem">${fmtDate(row.created_at)}</p><span class="badge user">User Added</span></div>`);
+                        layer.category = 'user';
+                        layer._dbId = row.id;
+                        layer.addTo(drawnItems);
+                        userLayers[row.id] = layer;
+                    } catch(e) { console.error('Error rendering user feature:', row.id, e); }
+                });
+
+                document.getElementById('user-count').innerText = data.length;
+                await loadUserFeaturesTable();
+            } catch(err) {
+                console.error('Error loading user features:', err);
+                document.getElementById('user-count').innerText = '0';
+            }
+        }
+
+        // ─── Delete user feature ─────────────────────────────────────
+        async function deleteUserFeature(id) {
+            if (!confirm('Delete this feature?')) return;
+            try {
+                await db.from('user_features').delete().eq('id', id);
+                if (userLayers[id]) { drawnItems.removeLayer(userLayers[id]); delete userLayers[id]; }
+                const cur = parseInt(document.getElementById('user-count').innerText) || 1;
+                document.getElementById('user-count').innerText = Math.max(0, cur - 1);
+                await loadUserFeaturesTable();
+            } catch(e) { console.error('Delete error:', e); }
+        }
+
+        // ─── Export KML ──────────────────────────────────────────────
         document.getElementById('export-btn').onclick = function() {
             const geojson = drawnItems.toGeoJSON();
             if (geojson.features.length === 0) {
-                alert('No data to export! Use the drawing icons on the top right to create points or polygons first.');
+                alert('No user features to export. Draw points or polygons first.');
                 return;
             }
-
             try {
-                // Convert GeoJSON to KML using tokml
-                const kml = tokml(geojson, {
-                    name: 'GAB Ramsar Custom Features',
-                    description: 'Custom points and polygons created on the GAB Ramsar Sites Map'
-                });
-
-                const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+                const kml = tokml(geojson, { name:'GAB Ramsar Custom Features', description:'Custom points and polygons from the GAB Ramsar Sites Map' });
+                const blob = new Blob([kml], { type:'application/vnd.google-earth.kml+xml' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'GAB-Ramsar-Custom-Data.kml';
-                a.click();
+                const a = document.createElement('a'); a.href=url; a.download='GAB-Ramsar-Custom-Data.kml'; a.click();
                 URL.revokeObjectURL(url);
-            } catch (err) {
-                console.error("KML Export failed:", err);
-                alert("Error generating KML file. Please check console logs.");
-            }
+            } catch(e) { console.error('KML export error:', e); alert('Export failed. Check console.'); }
         };
 
-        // Original script continues...
-        // Close modal on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
+        // ─── GeoJSON Ingest ──────────────────────────────────────────
+        document.getElementById('upload-btn').onclick = () => document.getElementById('upload-input').click();
+
+        document.getElementById('upload-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+            let geojson;
+            try { geojson = JSON.parse(text); } catch(err) { alert('Invalid GeoJSON file.'); return; }
+
+            const features = geojson.type === 'FeatureCollection' ? geojson.features
+                           : geojson.type === 'Feature' ? [geojson] : [];
+
+            if (features.length === 0) { alert('No features found in file.'); return; }
+
+            let added = 0;
+            for (const f of features) {
+                const name = (f.properties && (f.properties.name || f.properties.Name || f.properties.NAME)) || `Ingested Feature ${added+1}`;
+                const desc = (f.properties && (f.properties.description || f.properties.desc || f.properties.notes)) || '';
+                const isPolygon = f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon');
+                let areaHa = null;
+
+                try {
+                    const layer = L.geoJSON(f, {
+                        style: { color:'#1565C0', weight:2, fillColor:'#1565C0', fillOpacity:0.3 },
+                        pointToLayer: (ft, latlng) => L.marker(latlng, { icon: userIcon })
+                    });
+                    layer.bindPopup(`<div class="custom-popup user"><h3>${name}</h3><p>${desc}</p><span class="badge user">Ingested Data</span></div>`);
+                    layer.category = 'user';
+                    drawnItems.addLayer(layer);
+
+                    const { data, error } = await db.from('user_features').insert({
+                        name, description: desc || null,
+                        feature_type: isPolygon ? 'polygon' : 'point',
+                        geojson: f.geometry,
+                        area_hectares: areaHa
+                    }).select().single();
+
+                    if (!error && data) { layer._dbId = data.id; userLayers[data.id] = layer; }
+                    added++;
+                } catch(err) { console.error('Ingest error:', err); }
+            }
+
+            const cur = parseInt(document.getElementById('user-count').innerText) || 0;
+            document.getElementById('user-count').innerText = cur + added;
+            await loadUserFeaturesTable();
+            alert(`${added} feature(s) ingested and saved.`);
+            this.value = '';
         });
+
+        // ─── Data View Panel ─────────────────────────────────────────
+        document.getElementById('data-view-btn').onclick = () => {
+            document.getElementById('data-panel').classList.toggle('open');
+            populateStaticTables();
+        };
+        document.getElementById('dp-close-btn').onclick = () => document.getElementById('data-panel').classList.remove('open');
+
+        document.querySelectorAll('.dp-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.dp-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.dp-section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        let staticTabsPopulated = false;
+
+        function populateStaticTables() {
+            if (staticTabsPopulated) return;
+            staticTabsPopulated = true;
+            buildHealthTable();
+            buildMangroveTable();
+            buildCarbonTable();
+            buildCoastalTable();
+        }
+
+        function filterTable(tableId, query) {
+            const q = query.toLowerCase();
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => { row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+        }
+
+        function buildHealthTable() {
+            const tbody = document.querySelector('#health-table tbody');
+            tbody.innerHTML = '';
+            samplingData.forEach((d, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${d.site}</td><td><span class="td-badge" style="background:${d.region==='keta'?'rgba(44,94,26,0.1)':'rgba(133,199,66,0.15)'};color:${d.region==='keta'?'var(--primary)':'#558B2F'}">${d.region.toUpperCase()}</span></td><td>${d.type}</td><td style="font-size:0.8rem;color:#666">${d.desc}</td><td><button class="locate-btn" onclick="locateLayer(${i},'health')">&#x25CE;</button></td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('health-count-label').textContent = `${samplingData.length} sampling sites`;
+        }
+
+        function buildMangroveTable() {
+            const tbody = document.querySelector('#mangrove-table tbody');
+            tbody.innerHTML = '';
+            let idx = 0;
+            const healthCount = samplingData.length;
+            const startIdx = healthCount;
+            if (typeof gisPoints !== 'undefined') {
+                gisPoints.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${d.name}</td><td><span class="td-badge" style="background:rgba(230,126,34,0.1);color:var(--tertiary)">Point</span></td><td style="font-size:0.8rem;color:#666">${d.desc || '—'}</td><td><button class="locate-btn" onclick="locateLayerByIdx(${startIdx+idx},'mangrove')">&#x25CE;</button></td>`;
+                    tbody.appendChild(tr);
+                    idx++;
+                });
+            }
+            if (typeof gisPolygons !== 'undefined') {
+                gisPolygons.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${p.name}</td><td><span class="td-badge" style="background:rgba(230,126,34,0.15);color:var(--tertiary)">Polygon</span></td><td style="font-size:0.8rem;color:#666">${p.fileName||'—'}</td><td>—</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+            const total = (typeof gisPoints!=='undefined'?gisPoints.length:0) + (typeof gisPolygons!=='undefined'?gisPolygons.length:0);
+            document.getElementById('mangrove-count-label').textContent = `${total} mangrove features`;
+        }
+
+        function buildCarbonTable() {
+            const tbody = document.querySelector('#carbon-table tbody');
+            tbody.innerHTML = '';
+            if (typeof carbonInventoryPoints !== 'undefined') {
+                carbonInventoryPoints.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${d.plotId||'—'}</td><td>${d.site}</td><td>${d.community}</td><td style="font-size:0.8rem;color:#666">${d.landCover}</td><td>—</td>`;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('carbon-count-label').textContent = `${carbonInventoryPoints.length} carbon plots`;
+            }
+        }
+
+        function buildCoastalTable() {
+            const tbody = document.querySelector('#coastal-table tbody');
+            tbody.innerHTML = '';
+            if (typeof coastalPoints !== 'undefined') {
+                coastalPoints.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${d.name}</td><td><span class="td-badge" style="background:rgba(0,137,123,0.1);color:var(--coastal)">${d.ecosystem_type}</span></td><td>${d.site}</td><td style="font-size:0.8rem;color:#666">${d.desc}</td><td>—</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+            if (typeof coastalPolygons !== 'undefined') {
+                coastalPolygons.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${p.name}</td><td><span class="td-badge" style="background:rgba(0,137,123,0.15);color:var(--coastal)">${p.ecosystem_type}</span></td><td>${p.site}</td><td style="font-size:0.8rem;color:#666">${p.desc}</td><td>—</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+            const total = (typeof coastalPoints!=='undefined'?coastalPoints.length:0) + (typeof coastalPolygons!=='undefined'?coastalPolygons.length:0);
+            document.getElementById('coastal-count-label').textContent = `${total} coastal features`;
+        }
+
+        async function loadUserFeaturesTable() {
+            try {
+                const { data, error } = await db.from('user_features').select('*').order('created_at', { ascending:false });
+                if (error) throw error;
+                const tbody = document.querySelector('#user-table tbody');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    document.getElementById('user-table-empty').style.display = 'block';
+                    document.getElementById('user-table').style.display = 'none';
+                } else {
+                    document.getElementById('user-table-empty').style.display = 'none';
+                    document.getElementById('user-table').style.display = 'table';
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${row.name}</strong></td>
+                            <td><span class="td-badge" style="background:rgba(21,101,192,0.1);color:var(--user)">${row.feature_type}</span></td>
+                            <td>${row.area_hectares ? row.area_hectares+' ha' : '—'}</td>
+                            <td style="font-size:0.8rem;color:#666;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${row.description||'—'}</td>
+                            <td style="font-size:0.75rem;color:#888;white-space:nowrap">${fmtDate(row.created_at)}</td>
+                            <td><button class="delete-row-btn" onclick="deleteUserFeature('${row.id}')">&#x2715;</button></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+                document.getElementById('user-count-label').textContent = `${data.length} user feature${data.length!==1?'s':''}`;
+            } catch(e) { console.error('Error loading user table:', e); }
+        }
+
+        // Keyboard close
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeModal(); document.getElementById('data-panel').classList.remove('open'); }
+        });
+
+        // ─── Boot ─────────────────────────────────────────────────────
+        loadUserFeaturesFromDB();
     </script>
 </body>
 </html>
