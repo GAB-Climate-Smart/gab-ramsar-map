@@ -430,6 +430,65 @@
 
         .save-btn { background: #2e7d32; color: white; }
         .cancel-btn { background: #eee; color: #666; }
+
+        /* Leaflet.draw Visibility Overrides */
+        .leaflet-draw-toolbar {
+            border: 2px solid var(--primary) !important;
+            border-radius: 8px !important;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+        }
+
+        .leaflet-draw-toolbar a {
+            background-color: var(--primary) !important;
+            background-image: none !important;
+            color: white !important;
+            width: 34px !important;
+            height: 34px !important;
+            line-height: 34px !important;
+            border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+        }
+
+        .leaflet-draw-toolbar a:hover {
+            background-color: var(--secondary) !important;
+        }
+
+        /* Custom Icons for visibility */
+        .leaflet-draw-draw-polygon { background-position: -31px -2px !important; filter: brightness(0) invert(1); }
+        .leaflet-draw-draw-marker { background-position: -271px -2px !important; filter: brightness(0) invert(1); }
+        .leaflet-draw-edit-edit { background-position: -151px -2px !important; filter: brightness(0) invert(1); }
+        .leaflet-draw-edit-remove { background-position: -181px -2px !important; filter: brightness(0) invert(1); }
+
+        .leaflet-draw-actions {
+            left: -110px !important;
+            margin-top: 2px !important;
+        }
+
+        .leaflet-draw-actions a {
+            background-color: #d32f2f !important;
+            color: white !important;
+            font-weight: 700 !important;
+            padding: 5px 10px !important;
+            border-radius: 4px !important;
+            margin: 2px !important;
+            height: auto !important;
+            line-height: inherit !important;
+        }
+
+        .leaflet-draw-tooltip {
+            background: #1a1a1a !important;
+            border: 1px solid #fff !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+            padding: 8px 12px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+        }
+
+        .leaflet-draw-tooltip-subtext {
+            color: var(--secondary) !important;
+            font-weight: 700 !important;
+        }
     </style>
 </head>
 <body>
@@ -453,12 +512,6 @@
     <!-- Map Container -->
     <div id="map"></div>
     
-    <!-- Basemap Toggle Button (Moved after map so z-index works properly relative to leaflet) -->
-    <button class="basemap-toggle" id="basemap-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg>
-        <span>Satellite View</span>
-    </button>
-
     <!-- UI Overlay: Header -->
     <div class="overlay header-panel">
         <div class="logo">GAB Ltd.</div>
@@ -502,6 +555,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <!-- Add GeometryUtil for area calculation -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.js"></script>
+    <!-- Add tokml for KML export -->
+    <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
     
     <!-- Load Processed GIS Data -->
     <script src="gis_data.js?v=2"></script>
@@ -976,21 +1031,32 @@
             closeModal();
         }
 
-        // Export Functionality
+        // Export Functionality (KML)
         document.getElementById('export-btn').onclick = function() {
-            const data = drawnItems.toGeoJSON();
-            if (data.features.length === 0) {
-                alert('No data to export! Use the drawing icons on the right to create points or polygons first.');
+            const geojson = drawnItems.toGeoJSON();
+            if (geojson.features.length === 0) {
+                alert('No data to export! Use the drawing icons on the top right to create points or polygons first.');
                 return;
             }
 
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'GAB-Ramsar-Custom-Data.json';
-            a.click();
-            URL.revokeObjectURL(url);
+            try {
+                // Convert GeoJSON to KML using tokml
+                const kml = tokml(geojson, {
+                    name: 'GAB Ramsar Custom Features',
+                    description: 'Custom points and polygons created on the GAB Ramsar Sites Map'
+                });
+
+                const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'GAB-Ramsar-Custom-Data.kml';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error("KML Export failed:", err);
+                alert("Error generating KML file. Please check console logs.");
+            }
         };
 
         // Original script continues...
