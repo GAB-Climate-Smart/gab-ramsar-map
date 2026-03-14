@@ -197,6 +197,17 @@
         .leaflet-draw-tooltip { background: #1a1a1a !important; border: 1px solid rgba(255,255,255,0.3) !important; color: #fff !important; font-weight: 600 !important; padding: 8px 12px !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; }
         .leaflet-draw-tooltip-subtext { color: var(--secondary) !important; font-weight: 700 !important; }
 
+        /* Street View mode */
+        #map.streetview-mode { cursor: crosshair !important; }
+        #map.streetview-mode * { cursor: crosshair !important; }
+        #sv-hint {
+            position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.75); color: white;
+            padding: 8px 18px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+            z-index: 2000; display: none; pointer-events: none; white-space: nowrap;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+
         @media (max-width: 768px) {
             .header-panel { top: 10px; left: 10px; right: 10px; width: auto; }
             .controls-panel { bottom: 10px; left: 10px; right: 10px; border-radius: 12px; justify-content: center; }
@@ -240,6 +251,8 @@
 
     <!-- Map -->
     <div id="map"></div>
+    <!-- Street View hint banner -->
+    <div id="sv-hint" role="status" aria-live="polite">📍 Click anywhere on the map to open Street View at that location</div>
 
     <!-- Header Panel -->
     <div class="overlay header-panel">
@@ -438,9 +451,10 @@
 
         const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO | GAB Ltd', subdomains: 'abcd', maxZoom: 20 });
         const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri', maxZoom: 18 });
+        const osmStreets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | GAB Ltd', maxZoom: 19 });
         cartoLight.addTo(map);
 
-        // Basemap Toggle
+        // Basemap Toggle — cycles: Light → Satellite → Streets & Towns → Light
         L.Control.BasemapToggle = L.Control.extend({
             onAdd: function(map) {
                 const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
@@ -448,17 +462,62 @@
                 c.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"/></svg><span>Satellite View</span>';
                 c.onmouseover = () => { c.style.backgroundColor='#fff'; c.style.color='var(--primary)'; };
                 c.onmouseout = () => { c.style.backgroundColor='var(--glass-bg)'; c.style.color='var(--dark)'; };
-                let cur = 'light';
+                const basemapStates = [
+                    { layer: cartoLight,    nextLabel: 'Satellite View',  nextIdx: 1 },
+                    { layer: esriSatellite, nextLabel: 'Streets & Towns', nextIdx: 2 },
+                    { layer: osmStreets,    nextLabel: 'Map View',        nextIdx: 0 }
+                ];
+                let curIdx = 0;
                 c.onclick = () => {
                     const span = c.querySelector('span');
-                    if (cur === 'light') { map.removeLayer(cartoLight); esriSatellite.addTo(map); span.innerText='Map View'; cur='satellite'; }
-                    else { map.removeLayer(esriSatellite); cartoLight.addTo(map); span.innerText='Satellite View'; cur='light'; }
+                    map.removeLayer(basemapStates[curIdx].layer);
+                    curIdx = basemapStates[curIdx].nextIdx;
+                    basemapStates[curIdx].layer.addTo(map);
+                    span.innerText = basemapStates[curIdx].nextLabel;
                 };
                 L.DomEvent.disableClickPropagation(c);
                 return c;
             }
         });
         new L.Control.BasemapToggle({ position: 'topright' }).addTo(map);
+
+        // Street View Control — click the button then click the map to open Google Maps Street View
+        L.Control.StreetView = L.Control.extend({
+            onAdd: function(map) {
+                const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                Object.assign(c.style, { backgroundColor:'var(--glass-bg)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', border:'1px solid var(--glass-border)', borderRadius:'50px', boxShadow:'0 10px 25px rgba(0,0,0,0.15)', padding:'8px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:'8px', fontWeight:'600', fontSize:'0.85rem', color:'var(--dark)', transition:'all 0.3s ease', fontFamily:'Inter,sans-serif' });
+                c.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="4" r="2"/><path d="M15.89 8.11C15.5 7.72 14.83 7 13.5 7h-3c-1.33 0-2 .72-2.39 1.11L6 10.5 7.5 12l2-2v10h2v-5h1v5h2V10l2 2 1.5-1.5-1.11-2.39z"/></svg><span>Street View</span>';
+                let svActive = false;
+                const mapEl = document.getElementById('map');
+                const hint  = document.getElementById('sv-hint');
+                c.onmouseover = () => { if (!svActive) { c.style.backgroundColor='#fff'; c.style.color='var(--primary)'; } };
+                c.onmouseout  = () => { if (!svActive) { c.style.backgroundColor='var(--glass-bg)'; c.style.color='var(--dark)'; } };
+                c.onclick = () => {
+                    svActive = !svActive;
+                    if (svActive) {
+                        Object.assign(c.style, { backgroundColor:'var(--primary)', color:'white', boxShadow:'0 4px 10px rgba(44,94,26,0.4)' });
+                        mapEl.classList.add('streetview-mode');
+                        hint.style.display = 'block';
+                    } else {
+                        Object.assign(c.style, { backgroundColor:'var(--glass-bg)', color:'var(--dark)', boxShadow:'0 10px 25px rgba(0,0,0,0.15)' });
+                        mapEl.classList.remove('streetview-mode');
+                        hint.style.display = 'none';
+                    }
+                };
+                map.on('click', function(e) {
+                    if (!svActive) return;
+                    const { lat, lng } = e.latlng;
+                    window.open('https://maps.google.com/maps?q=&layer=c&cbll=' + lat.toFixed(6) + ',' + lng.toFixed(6), '_blank', 'noopener,noreferrer');
+                    svActive = false;
+                    Object.assign(c.style, { backgroundColor:'var(--glass-bg)', color:'var(--dark)', boxShadow:'0 10px 25px rgba(0,0,0,0.15)' });
+                    mapEl.classList.remove('streetview-mode');
+                    hint.style.display = 'none';
+                });
+                L.DomEvent.disableClickPropagation(c);
+                return c;
+            }
+        });
+        new L.Control.StreetView({ position: 'topright' }).addTo(map);
 
         // ─── Icons ──────────────────────────────────────────────────
         const mkIcon = (color, shape) => L.divIcon({
