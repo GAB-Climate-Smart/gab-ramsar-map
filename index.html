@@ -1143,7 +1143,7 @@
 
         // ─── AOI map layers ──────────────────────────────────────
         const aoiLayerGroup = L.layerGroup().addTo(map);
-        let ramsarBoundaryLayer = null;
+        let ramsarBoundaryLayer = null, songorBoundaryLayer = null;
         let satTileLayer = null;
         let currentSatLayer = 'none';
 
@@ -1167,16 +1167,13 @@
             layer.addTo(aoiLayerGroup);
         });
 
-        // Load Ramsar boundary
+        // Load Ramsar boundaries
+        const ramsarStyle = { color: '#7B1FA2', weight: 2.5, opacity: 0.85, fillColor: '#7B1FA2', fillOpacity: 0.04, dashArray: '8,5' };
+
         fetch('data/keta_ramsar_boundary.geojson')
             .then(r => r.json())
             .then(geojson => {
-                ramsarBoundaryLayer = L.geoJSON(geojson, {
-                    style: {
-                        color: '#7B1FA2', weight: 2.5, opacity: 0.85,
-                        fillColor: '#7B1FA2', fillOpacity: 0.04, dashArray: '8,5'
-                    }
-                });
+                ramsarBoundaryLayer = L.geoJSON(geojson, { style: ramsarStyle });
                 ramsarBoundaryLayer.bindPopup(`
                     <div class="custom-popup">
                         <h3>Keta Lagoon Complex</h3>
@@ -1187,7 +1184,23 @@
                 `);
                 ramsarBoundaryLayer.addTo(map);
             })
-            .catch(e => console.warn('Ramsar boundary not loaded:', e));
+            .catch(e => console.warn('Keta Ramsar boundary not loaded:', e));
+
+        fetch('data/songor_ramsar_boundary.geojson')
+            .then(r => r.json())
+            .then(geojson => {
+                songorBoundaryLayer = L.geoJSON(geojson, { style: ramsarStyle });
+                songorBoundaryLayer.bindPopup(`
+                    <div class="custom-popup">
+                        <h3>Songor Lagoon Complex</h3>
+                        <p>Ramsar Site No. 1047 &mdash; Ghana</p>
+                        <p style="color:#888;font-size:0.78rem">Designated 1992 &middot; Ada/Songor coastal wetlands</p>
+                        <span class="badge" style="background:rgba(123,31,162,0.1);color:#7B1FA2">Ramsar Boundary</span>
+                    </div>
+                `);
+                songorBoundaryLayer.addTo(map);
+            })
+            .catch(e => console.warn('Songor Ramsar boundary not loaded:', e));
 
         // ─── NASA GIBS Satellite Layer Logic ────────────────────
         const GIBS_WMTS = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{layer}/default/{date}/GoogleMapsCompatible/{z}/{y}/{x}.{fmt}';
@@ -1283,9 +1296,13 @@
         };
 
         document.getElementById('ramsar-toggle').onchange = function() {
-            if (!ramsarBoundaryLayer) return;
-            if (this.checked) ramsarBoundaryLayer.addTo(map);
-            else map.removeLayer(ramsarBoundaryLayer);
+            if (this.checked) {
+                if (ramsarBoundaryLayer) ramsarBoundaryLayer.addTo(map);
+                if (songorBoundaryLayer) songorBoundaryLayer.addTo(map);
+            } else {
+                if (ramsarBoundaryLayer) map.removeLayer(ramsarBoundaryLayer);
+                if (songorBoundaryLayer) map.removeLayer(songorBoundaryLayer);
+            }
         };
         document.getElementById('aoi-toggle').onchange = function() {
             if (this.checked) aoiLayerGroup.addTo(map);
