@@ -214,6 +214,61 @@
             .action-btns { bottom: 80px; right: 10px; }
             #data-panel { width: 100vw; }
         }
+
+        /* ─── Satellite Monitor Panel ─────────────────────── */
+        #sat-panel {
+            position: absolute; z-index: 1100;
+            top: 20px; right: 20px; width: 310px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 18px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: none; font-family: 'Inter', sans-serif;
+            max-height: 80vh; overflow-y: auto;
+        }
+        #sat-panel.open { display: block; }
+        .sat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+        .sat-title { font-size:0.9rem; font-weight:700; color:var(--dark); display:flex; align-items:center; gap:6px; }
+        .sat-dot { width:8px; height:8px; border-radius:50%; background:#4CAF50; animation:pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .sat-close { background:none; border:none; cursor:pointer; font-size:1.1rem; color:#888; padding:0; }
+        .sat-section-label { font-size:0.72rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.05em; margin:12px 0 6px; }
+        .sat-btn-row { display:flex; gap:5px; flex-wrap:wrap; }
+        .sat-btn { padding:5px 10px; border-radius:20px; border:1.5px solid #ddd; background:white; font-size:0.75rem; font-weight:600; cursor:pointer; color:#555; transition:all 0.2s; }
+        .sat-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+        .sat-date-row { display:flex; align-items:center; gap:8px; margin-top:6px; }
+        .sat-date-input { flex:1; padding:5px 8px; border-radius:6px; border:1.5px solid #ddd; font-size:0.78rem; font-family:inherit; }
+        .sat-date-nav { padding:4px 8px; border-radius:6px; border:1.5px solid #ddd; background:white; cursor:pointer; font-size:0.85rem; color:#555; }
+        .sat-opacity-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+        .sat-opacity-label { font-size:0.75rem; color:#666; min-width:50px; }
+        .sat-opacity-slider { flex:1; height:4px; cursor:pointer; }
+        .ndvi-legend { margin-top:10px; }
+        .ndvi-bar { height:12px; border-radius:6px; background: linear-gradient(to right, #d73027, #fc8d59, #fee090, #91cf60, #1a9850); }
+        .ndvi-labels { display:flex; justify-content:space-between; font-size:0.68rem; color:#888; margin-top:2px; }
+        .aoi-cards { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+        .aoi-card { background:rgba(44,94,26,0.06); border:1px solid rgba(44,94,26,0.15); border-radius:8px; padding:8px 10px; }
+        .aoi-card-header { display:flex; justify-content:space-between; align-items:center; }
+        .aoi-card-name { font-size:0.78rem; font-weight:600; color:var(--dark); }
+        .aoi-card-area { font-size:0.7rem; color:#888; }
+        .aoi-ndvi-row { display:flex; align-items:center; gap:6px; margin-top:4px; }
+        .aoi-ndvi-val { font-size:0.85rem; font-weight:700; color:var(--primary); }
+        .aoi-alert { font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:10px; }
+        .aoi-alert.normal { background:rgba(76,175,80,0.15); color:#2E7D32; }
+        .aoi-alert.warning { background:rgba(255,152,0,0.15); color:#E65100; }
+        .aoi-alert.critical { background:rgba(244,67,54,0.15); color:#B71C1C; }
+        .aoi-trend { font-size:0.7rem; color:#888; }
+        .sat-obs-date { font-size:0.7rem; color:#888; margin-top:2px; }
+        .sat-refresh-btn { width:100%; margin-top:10px; padding:7px; border-radius:8px; border:none; background:var(--primary); color:white; font-size:0.78rem; font-weight:600; cursor:pointer; }
+        .sat-refresh-btn:hover { background:#1e4012; }
+        .sat-boundary-row { display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid rgba(0,0,0,0.07); }
+        .sat-toggle-label { font-size:0.78rem; color:#555; }
+        .sat-toggle { position:relative; width:34px; height:18px; }
+        .sat-toggle input { opacity:0; width:0; height:0; }
+        .sat-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:18px; transition:.3s; }
+        .sat-toggle-slider:before { content:''; position:absolute; width:14px; height:14px; left:2px; bottom:2px; background:white; border-radius:50%; transition:.3s; }
+        .sat-toggle input:checked + .sat-toggle-slider { background:var(--primary); }
+        .sat-toggle input:checked + .sat-toggle-slider:before { transform:translateX(16px); }
     </style>
 </head>
 <body>
@@ -231,6 +286,10 @@
         <button class="action-btn blue" id="data-view-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Data View
+        </button>
+        <button class="action-btn" id="sat-monitor-btn" style="background:linear-gradient(135deg,#1565C0,#0D47A1);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            Satellite Monitor
         </button>
     </div>
     <input type="file" id="upload-input" accept=".geojson,.json,.kml" style="display:none">
@@ -348,6 +407,75 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- Satellite Monitor Panel -->
+    <div id="sat-panel">
+        <div class="sat-header">
+            <div class="sat-title">
+                <span class="sat-dot"></span>
+                Satellite Monitor
+            </div>
+            <button class="sat-close" id="sat-close-btn">&#x2715;</button>
+        </div>
+
+        <div class="sat-section-label">Satellite Layer</div>
+        <div class="sat-btn-row" id="sat-layer-btns">
+            <button class="sat-btn active" data-layer="none">Off</button>
+            <button class="sat-btn" data-layer="truecolor">True Colour</button>
+            <button class="sat-btn" data-layer="falsecolor">Vegetation</button>
+            <button class="sat-btn" data-layer="ndvi">NDVI</button>
+            <button class="sat-btn" data-layer="evi">EVI</button>
+        </div>
+
+        <div class="sat-section-label">Date</div>
+        <div class="sat-date-row">
+            <button class="sat-date-nav" id="sat-date-prev">&#x2039;</button>
+            <input type="date" class="sat-date-input" id="sat-date-input">
+            <button class="sat-date-nav" id="sat-date-next">&#x203a;</button>
+        </div>
+        <div style="font-size:0.68rem;color:#aaa;margin-top:3px">MODIS Terra / Aqua — 250 m · NASA GIBS</div>
+
+        <div class="sat-section-label">Opacity</div>
+        <div class="sat-opacity-row">
+            <span class="sat-opacity-label" id="sat-opacity-label">75%</span>
+            <input type="range" class="sat-opacity-slider" id="sat-opacity" min="0" max="100" value="75">
+        </div>
+
+        <div class="ndvi-legend" id="ndvi-legend" style="display:none">
+            <div class="sat-section-label" style="margin-top:8px">NDVI / EVI Scale</div>
+            <div class="ndvi-bar"></div>
+            <div class="ndvi-labels">
+                <span>&#x2212;1 Bare/Water</span>
+                <span>0</span>
+                <span>+1 Dense Veg.</span>
+            </div>
+        </div>
+
+        <div class="sat-boundary-row">
+            <span class="sat-toggle-label">Ramsar Boundary</span>
+            <label class="sat-toggle">
+                <input type="checkbox" id="ramsar-toggle" checked>
+                <span class="sat-toggle-slider"></span>
+            </label>
+        </div>
+        <div class="sat-boundary-row" style="border-top:none; margin-top:4px; padding-top:0;">
+            <span class="sat-toggle-label">Drone AOIs</span>
+            <label class="sat-toggle">
+                <input type="checkbox" id="aoi-toggle" checked>
+                <span class="sat-toggle-slider"></span>
+            </label>
+        </div>
+
+        <div class="sat-section-label" style="margin-top:12px">NDVI Monitoring — AOIs</div>
+        <div class="aoi-cards" id="aoi-cards">
+            <!-- Populated by JS -->
+        </div>
+
+        <button class="sat-refresh-btn" id="sat-refresh-btn">Refresh NDVI Data</button>
+        <div style="font-size:0.68rem;color:#aaa;margin-top:6px;text-align:center">
+            Automated scan every 3 days · Sentinel-2 10m · <a href="https://github.com/GAB-Climate-Smart/gab-ramsar-map/actions" target="_blank" style="color:#1565C0">View logs</a>
         </div>
     </div>
 
@@ -972,6 +1100,255 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') { closeModal(); document.getElementById('data-panel').classList.remove('open'); }
         });
+
+        // ═══════════════════════════════════════════════════════════
+        // SATELLITE MONITOR MODULE
+        // ═══════════════════════════════════════════════════════════
+
+        // ─── Drone AOI Polygons ──────────────────────────────────
+        const droneAOIs = [
+            {
+                name: 'Agatsivi-Agortoe Stretch', area_ha: 762, cluster: 'Central',
+                centroid: [5.85382, 0.74539],
+                kml: 'https://gab-ramsar-map.vercel.app/kml/drone-aois/agatsivi-agortoe-stretch.kml',
+                geojson: { type:'Feature', properties:{ name:'Agatsivi-Agortoe Stretch', area_ha:762 }, geometry:{ type:'Polygon', coordinates:[[
+                    [0.730589,5.831254],[0.729559,5.831212],[0.729258,5.832166],[0.72843,5.834068],[0.727558,5.834068],[0.726429,5.835191],[0.725472,5.837437],[0.724301,5.837823],[0.723259,5.838595],[0.722603,5.840069],[0.722131,5.841371],[0.721445,5.841971],[0.720932,5.843188],[0.720589,5.844791],[0.720246,5.847033],[0.720332,5.850277],[0.720975,5.856591],[0.721832,5.859491],[0.72297,5.863706],[0.723699,5.866177],[0.724514,5.868262],[0.725558,5.869948],[0.726558,5.870948],[0.727558,5.871305],[0.729387,5.871305],[0.730687,5.870219],[0.731602,5.868605],[0.732816,5.866905],[0.734244,5.864662],[0.735015,5.861805],[0.735015,5.858948],[0.734501,5.856434],[0.733458,5.853920],[0.733072,5.851406],[0.733201,5.848892],[0.733330,5.845949],[0.733330,5.843006],[0.733072,5.840320],[0.732172,5.837848],[0.731487,5.835377],[0.731144,5.833334],[0.730589,5.831254]
+                ]] } }
+            },
+            {
+                name: 'Salo-Agortoe Stretch', area_ha: 525, cluster: 'Central',
+                centroid: [5.84106, 0.77167],
+                kml: 'https://gab-ramsar-map.vercel.app/kml/drone-aois/salo-agortoe-stretch.kml',
+                geojson: { type:'Feature', properties:{ name:'Salo-Agortoe Stretch', area_ha:525 }, geometry:{ type:'Polygon', coordinates:[[
+                    [0.755739,5.826254],[0.754625,5.826997],[0.753168,5.828683],[0.751711,5.830797],[0.750683,5.833168],[0.750083,5.835968],[0.749997,5.838768],[0.750340,5.841568],[0.751197,5.844454],[0.752397,5.847083],[0.753940,5.849454],[0.755482,5.851397],[0.757082,5.852911],[0.759025,5.854768],[0.761054,5.855882],[0.763169,5.856425],[0.765283,5.856254],[0.767054,5.855140],[0.768311,5.853311],[0.768997,5.851225],[0.769340,5.848968],[0.769083,5.846625],[0.768311,5.844368],[0.767025,5.842111],[0.765397,5.840025],[0.763597,5.838111],[0.761711,5.836454],[0.759826,5.834883],[0.758254,5.833311],[0.757082,5.831654],[0.756340,5.829654],[0.755739,5.826254]
+                ]] } }
+            },
+            {
+                name: 'Anyanui Combine System', area_ha: 128, cluster: 'Western',
+                centroid: [5.79393, 0.72075],
+                kml: 'https://gab-ramsar-map.vercel.app/kml/drone-aois/anyanui-combine-system.kml',
+                geojson: { type:'Feature', properties:{ name:'Anyanui Combine System', area_ha:128 }, geometry:{ type:'Polygon', coordinates:[[
+                    [0.71557,5.795081],[0.717545,5.80029],[0.718918,5.800375],[0.719347,5.801656],[0.720162,5.801912],[0.723252,5.801742],[0.72454,5.797899],[0.725355,5.793416],[0.726256,5.789274],[0.72381,5.784407],[0.721922,5.784791],[0.721793,5.786584],[0.720763,5.787908],[0.719905,5.790171],[0.719562,5.792348],[0.718532,5.793928],[0.71557,5.795081]
+                ]] } }
+            },
+            {
+                name: 'Aborlove Nolopi Mangrove', area_ha: 52, cluster: 'Eastern',
+                centroid: [6.03727, 0.93429],
+                kml: 'https://gab-ramsar-map.vercel.app/kml/drone-aois/aborlove-nolopi-mangrove.kml',
+                geojson: { type:'Feature', properties:{ name:'Aborlove Nolopi Mangrove', area_ha:52 }, geometry:{ type:'Polygon', coordinates:[[
+                    [0.930877,6.038352],[0.934224,6.041767],[0.93652,6.041212],[0.936649,6.040017],[0.939202,6.039675],[0.939095,6.038374],[0.937335,6.038288],[0.936584,6.037798],[0.934653,6.034661],[0.934181,6.034021],[0.932336,6.032762],[0.930941,6.032698],[0.929739,6.034746],[0.931113,6.036347],[0.930877,6.038352]
+                ]] } }
+            }
+        ];
+
+        // ─── AOI map layers ──────────────────────────────────────
+        const aoiLayerGroup = L.layerGroup().addTo(map);
+        let ramsarBoundaryLayer = null;
+        let satTileLayer = null;
+        let currentSatLayer = 'none';
+
+        // Add drone AOI polygons
+        droneAOIs.forEach(aoi => {
+            const layer = L.geoJSON(aoi.geojson, {
+                style: {
+                    color: '#FF6B00', weight: 2.5, opacity: 0.9,
+                    fillColor: '#FF6B00', fillOpacity: 0.12, dashArray: '6,4'
+                }
+            });
+            layer.bindPopup(`
+                <div class="custom-popup">
+                    <h3>Drone Survey AOI</h3>
+                    <p><strong>${aoi.name}</strong></p>
+                    <p>Area: ${aoi.area_ha} ha &middot; ${aoi.cluster} Cluster</p>
+                    <a href="${aoi.kml}" target="_blank" style="color:#1565C0;font-size:0.8rem">Open in Google Earth</a>
+                    <br><span class="badge" style="background:rgba(255,107,0,0.12);color:#bf5000;margin-top:6px">Drone AOI</span>
+                </div>
+            `);
+            layer.addTo(aoiLayerGroup);
+        });
+
+        // Load Ramsar boundary
+        fetch('data/keta_ramsar_boundary.geojson')
+            .then(r => r.json())
+            .then(geojson => {
+                ramsarBoundaryLayer = L.geoJSON(geojson, {
+                    style: {
+                        color: '#7B1FA2', weight: 2.5, opacity: 0.85,
+                        fillColor: '#7B1FA2', fillOpacity: 0.04, dashArray: '8,5'
+                    }
+                });
+                ramsarBoundaryLayer.bindPopup(`
+                    <div class="custom-popup">
+                        <h3>Keta Lagoon Complex</h3>
+                        <p>Ramsar Site No. 1316 &mdash; Ghana</p>
+                        <p style="color:#888;font-size:0.78rem">Designated 1992 &middot; 1,200+ ha of coastal wetlands</p>
+                        <span class="badge" style="background:rgba(123,31,162,0.1);color:#7B1FA2">Ramsar Boundary</span>
+                    </div>
+                `);
+                ramsarBoundaryLayer.addTo(map);
+            })
+            .catch(e => console.warn('Ramsar boundary not loaded:', e));
+
+        // ─── NASA GIBS Satellite Layer Logic ────────────────────
+        const GIBS_WMTS = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{layer}/default/{date}/GoogleMapsCompatible/{z}/{y}/{x}.{fmt}';
+        const GIBS_WMS  = 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi';
+
+        const SAT_LAYERS = {
+            truecolor: { type:'wmts', layer:'MODIS_Terra_CorrectedReflectance_TrueColor', fmt:'jpg', label:'True Colour' },
+            falsecolor:{ type:'wmts', layer:'MODIS_Terra_CorrectedReflectance_Bands721',  fmt:'jpg', label:'Vegetation (False Colour)' },
+            ndvi:      { type:'wms',  layer:'MODIS_Terra_NDVI_8Day', fmt:'png', label:'NDVI 8-day' },
+            evi:       { type:'wms',  layer:'MODIS_Terra_EVI_8Day',  fmt:'png', label:'EVI 8-day' }
+        };
+
+        function getSatDate() { return document.getElementById('sat-date-input').value; }
+
+        function buildSatLayer(layerKey) {
+            const cfg = SAT_LAYERS[layerKey];
+            if (!cfg) return null;
+            const date = getSatDate();
+            const opacity = parseInt(document.getElementById('sat-opacity').value) / 100;
+
+            if (cfg.type === 'wmts') {
+                const url = GIBS_WMTS
+                    .replace('{layer}', cfg.layer)
+                    .replace('{date}', date)
+                    .replace('{fmt}', cfg.fmt);
+                return L.tileLayer(url, { maxZoom: 9, opacity, attribution: `NASA GIBS &middot; ${cfg.label}`, crossOrigin: '' });
+            } else {
+                return L.tileLayer.wms(GIBS_WMS, {
+                    layers: cfg.layer, format: `image/${cfg.fmt}`,
+                    transparent: true, version: '1.3.0',
+                    time: date, opacity,
+                    attribution: `NASA GIBS &middot; ${cfg.label}`
+                });
+            }
+        }
+
+        function applySatLayer(layerKey) {
+            if (satTileLayer) { map.removeLayer(satTileLayer); satTileLayer = null; }
+            currentSatLayer = layerKey;
+            if (layerKey === 'none') {
+                document.getElementById('ndvi-legend').style.display = 'none';
+                return;
+            }
+            satTileLayer = buildSatLayer(layerKey);
+            if (satTileLayer) {
+                satTileLayer.addTo(map);
+                satTileLayer.bringToBack();
+            }
+            const showLegend = layerKey === 'ndvi' || layerKey === 'evi';
+            document.getElementById('ndvi-legend').style.display = showLegend ? 'block' : 'none';
+        }
+
+        // ─── Satellite Panel Controls ────────────────────────────
+        // Date defaults to 3 days ago (most recent likely available)
+        const defaultSatDate = new Date();
+        defaultSatDate.setDate(defaultSatDate.getDate() - 3);
+        document.getElementById('sat-date-input').value = defaultSatDate.toISOString().split('T')[0];
+
+        document.getElementById('sat-monitor-btn').onclick = () => {
+            document.getElementById('sat-panel').classList.toggle('open');
+            if (document.getElementById('sat-panel').classList.contains('open')) {
+                loadNdviStats();
+            }
+        };
+        document.getElementById('sat-close-btn').onclick = () => document.getElementById('sat-panel').classList.remove('open');
+
+        document.getElementById('sat-layer-btns').querySelectorAll('.sat-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('#sat-layer-btns .sat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applySatLayer(btn.dataset.layer);
+            };
+        });
+
+        document.getElementById('sat-date-input').onchange = () => applySatLayer(currentSatLayer);
+
+        document.getElementById('sat-date-prev').onclick = () => {
+            const d = new Date(document.getElementById('sat-date-input').value);
+            d.setDate(d.getDate() - 1);
+            document.getElementById('sat-date-input').value = d.toISOString().split('T')[0];
+            applySatLayer(currentSatLayer);
+        };
+        document.getElementById('sat-date-next').onclick = () => {
+            const d = new Date(document.getElementById('sat-date-input').value);
+            d.setDate(d.getDate() + 1);
+            document.getElementById('sat-date-input').value = d.toISOString().split('T')[0];
+            applySatLayer(currentSatLayer);
+        };
+
+        document.getElementById('sat-opacity').oninput = function() {
+            document.getElementById('sat-opacity-label').textContent = this.value + '%';
+            if (satTileLayer) satTileLayer.setOpacity(parseInt(this.value) / 100);
+        };
+
+        document.getElementById('ramsar-toggle').onchange = function() {
+            if (!ramsarBoundaryLayer) return;
+            if (this.checked) ramsarBoundaryLayer.addTo(map);
+            else map.removeLayer(ramsarBoundaryLayer);
+        };
+        document.getElementById('aoi-toggle').onchange = function() {
+            if (this.checked) aoiLayerGroup.addTo(map);
+            else map.removeLayer(aoiLayerGroup);
+        };
+
+        document.getElementById('sat-refresh-btn').onclick = loadNdviStats;
+
+        // ─── NDVI Monitoring Stats (from Supabase) ───────────────
+        async function loadNdviStats() {
+            const container = document.getElementById('aoi-cards');
+            container.innerHTML = '<div style="font-size:0.75rem;color:#888;padding:8px 0">Loading NDVI data...</div>';
+
+            try {
+                // Get latest reading per AOI
+                const { data, error } = await db
+                    .from('ndvi_snapshots')
+                    .select('*')
+                    .order('observed_date', { ascending: false })
+                    .limit(20);
+
+                if (error) throw error;
+
+                // Group by AOI name - take most recent per AOI
+                const byAOI = {};
+                (data || []).forEach(row => {
+                    if (!byAOI[row.aoi_name]) byAOI[row.aoi_name] = row;
+                });
+
+                container.innerHTML = '';
+                droneAOIs.forEach(aoi => {
+                    const snap = byAOI[aoi.name];
+                    const ndvi   = snap ? parseFloat(snap.mean_ndvi).toFixed(3) : '—';
+                    const alert  = snap ? snap.alert_level : 'normal';
+                    const change = snap && snap.ndvi_change ? (snap.ndvi_change > 0 ? '+' : '') + parseFloat(snap.ndvi_change).toFixed(3) : '—';
+                    const obsDate = snap ? snap.observed_date : null;
+                    const trendIcon = !snap || !snap.ndvi_change ? '—'
+                        : snap.ndvi_change < -0.05 ? '&#x25BC;'
+                        : snap.ndvi_change >  0.05 ? '&#x25B2;' : '&#x2192;';
+
+                    container.innerHTML += `
+                        <div class="aoi-card">
+                            <div class="aoi-card-header">
+                                <span class="aoi-card-name">${aoi.name}</span>
+                                <span class="aoi-card-area">${aoi.area_ha} ha</span>
+                            </div>
+                            <div class="aoi-ndvi-row">
+                                <span class="aoi-ndvi-val">NDVI ${ndvi}</span>
+                                <span class="aoi-alert ${alert}">${alert.toUpperCase()}</span>
+                                <span class="aoi-trend">${trendIcon} ${change}</span>
+                            </div>
+                            ${obsDate ? `<div class="sat-obs-date">Last obs: ${obsDate}</div>` : '<div class="sat-obs-date">No data yet — monitoring runs every 3 days</div>'}
+                        </div>`;
+                });
+
+                if (container.innerHTML === '') {
+                    container.innerHTML = '<div style="font-size:0.75rem;color:#888;padding:8px 0">No monitoring data yet. GitHub Actions runs every 3 days.</div>';
+                }
+            } catch(err) {
+                console.error('NDVI stats error:', err);
+                container.innerHTML = '<div style="font-size:0.75rem;color:#e53935;padding:8px 0">Could not load NDVI data.</div>';
+            }
+        }
 
         // ─── Boot ─────────────────────────────────────────────────────
         loadUserFeaturesFromDB();

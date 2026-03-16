@@ -1,0 +1,31 @@
+name: NDVI Monitoring — Sentinel-2
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *'   # Every 3 days at 06:00 UTC
+  workflow_dispatch:          # Allow manual trigger from GitHub UI
+
+jobs:
+  ndvi-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pystac-client requests numpy shapely supabase rasterio
+
+      - name: Run NDVI computation
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/compute_ndvi.py
