@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Aborlove Nolopi Mangrove System</name>
+    <description>Combination of degraded and instact mangrove — 52 ha, Eastern Cluster, Keta Lagoon Drone Survey, GAB Climate Smart</description>
+    <Style id="aoi-style">
+      <LineStyle><color>ff0000ff</color><width>3</width></LineStyle>
+      <PolyStyle><color>440000ff</color></PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Aborlove Nolopi Mangrove System</name>
+      <description>Combination of degraded and instact mangrove</description>
+      <styleUrl>#aoi-style</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>0.930877,6.038352 0.934224,6.041767 0.93652,6.041212 0.936649,6.040017 0.939202,6.039675 0.939095,6.038374 0.937335,6.038288 0.936584,6.037798 0.934653,6.034661 0.934181,6.034021 0.932336,6.032762 0.930941,6.032698 0.929739,6.034746 0.931113,6.036347 0.930877,6.038352</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

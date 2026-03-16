@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Salo-Agortoe Stretch of Mangrove.</name>
+    <description>Cluster of Mangrove within a creek system close to the community — 525 ha, Central Cluster, Keta Lagoon Drone Survey, GAB Climate Smart</description>
+    <Style id="aoi-style">
+      <LineStyle><color>ff0000ff</color><width>3</width></LineStyle>
+      <PolyStyle><color>440000ff</color></PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Salo-Agortoe Stretch of Mangrove.</name>
+      <description>Cluster of Mangrove within a creek system close to the community</description>
+      <styleUrl>#aoi-style</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>0.768356,5.852547 0.755739,5.835128 0.762777,5.826248 0.784063,5.831115 0.779514,5.839056 0.778742,5.843923 0.775824,5.847936 0.768356,5.852547</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

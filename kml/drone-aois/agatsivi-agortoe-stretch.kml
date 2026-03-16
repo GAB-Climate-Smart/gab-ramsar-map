@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Agatsivi-Agortoe Stretch of Mangrove</name>
+    <description>This area presents a large contigous but fragmented mangroves and water — 762 ha, Central Cluster, Keta Lagoon Drone Survey, GAB Climate Smart</description>
+    <Style id="aoi-style">
+      <LineStyle><color>ff0000ff</color><width>3</width></LineStyle>
+      <PolyStyle><color>440000ff</color></PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Agatsivi-Agortoe Stretch of Mangrove</name>
+      <description>This area presents a large contigous but fragmented mangroves and water</description>
+      <styleUrl>#aoi-style</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>0.730591,5.859121 0.738487,5.871331 0.75222,5.862964 0.763464,5.850754 0.754709,5.837519 0.747671,5.835897 0.730591,5.859121</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

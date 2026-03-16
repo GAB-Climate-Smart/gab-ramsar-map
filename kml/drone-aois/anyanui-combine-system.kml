@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Anyanui Combine System AOI</name>
+    <description>Potential Area for Drone Survey — 128 ha, Western Cluster, Keta Lagoon Drone Survey, GAB Climate Smart</description>
+    <Style id="aoi-style">
+      <LineStyle><color>ff0000ff</color><width>3</width></LineStyle>
+      <PolyStyle><color>440000ff</color></PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Anyanui Combine System AOI</name>
+      <description>Potential Area for Drone Survey</description>
+      <styleUrl>#aoi-style</styleUrl>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>0.71557,5.795081 0.717545,5.80029 0.718918,5.800375 0.719347,5.801656 0.720162,5.801912 0.723252,5.801742 0.72454,5.797899 0.725355,5.793416 0.726256,5.789274 0.72381,5.784407 0.721922,5.784791 0.721793,5.786584 0.720763,5.787908 0.719905,5.790171 0.719562,5.792348 0.718532,5.793928 0.71557,5.795081</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>
