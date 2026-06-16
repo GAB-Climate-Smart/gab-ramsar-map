@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAB Wetland & Flood Suitability Guide</title>
+    <title>SiteSense Wetland & Flood Screening | GAB Climate Smart Investments Ltd</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
@@ -394,8 +394,8 @@
     <!-- Header Panel -->
     <div class="overlay header-panel">
         <div class="logo">GAB Climate Smart Investments Ltd</div>
-        <h1>Wetland &amp; Flood Suitability Guide</h1>
-        <p class="subtitle">Early spatial screening for wetlands, flood sensitivity, drainage context, terrain and coastal ecosystem signals in Ghana.</p>
+        <h1>SiteSense Wetland &amp; Flood Screening</h1>
+        <p class="subtitle">Early spatial screening for wetlands, floodplains, low-lying land, slope, elevation, streams, rivers, drainage context and coastal ecosystem signals in Ghana.</p>
         <div class="region-grid">
             <button class="region-btn" data-region="accra">Accra Flood Context</button>
             <button class="region-btn" data-region="winneba">Winneba Coast</button>
@@ -434,7 +434,7 @@
                 <div class="stat-label">Public / User Contributed Features</div>
             </div>
         </div>
-        <div class="guide-note">This guide supports early due diligence. It does not replace EPA, local assembly, Water Resources Commission, engineering, land-title or permitting decisions.</div>
+        <div class="guide-note">This SiteSense layer supports early due diligence. It does not replace EPA, local assembly, Water Resources Commission, engineering, land-title or permitting decisions.</div>
     </div>
 
     <!-- Filter Controls -->
@@ -453,12 +453,12 @@
         <div class="sp-header">
             <div>
                 <div class="sp-kicker">Public Site Check</div>
-                <div class="sp-title">Terrain and wetland/flood sensitivity screening</div>
+                <div class="sp-title">Wetland, floodplain, drainage and terrain screening</div>
             </div>
             <button class="sp-close" id="sp-close-btn">&#x2715;</button>
         </div>
         <div class="sp-body">
-            <p class="sp-text">Draw a boundary, click a point, or use the map centre. The first public check samples terrain from the GAB OS Earth Engine service and combines it with visible wetland/flood context layers.</p>
+            <p class="sp-text">Draw a boundary, click a point, or use the map centre. The public check samples terrain from the GAB OS Earth Engine service and combines it with visible wetland, floodplain, river, stream, drainage and coastal-risk context layers.</p>
             <div class="sp-row">
                 <div class="sp-field">
                     <label for="screen-lat">Latitude</label>
@@ -477,7 +477,7 @@
             </div>
             <div class="sp-status" id="screen-status">No site checked yet.</div>
             <div id="screen-result"></div>
-            <div class="sp-limit">Screening results are indicative. Sensitive or uncertain results should move into GAB Consultancy/SiteSense review before money, design or construction decisions are made.</div>
+            <div class="sp-limit">Screening results are indicative. Sensitive or uncertain results should move into GAB Consultancy or SiteSense review before money, design or construction decisions are made.</div>
         </div>
     </div>
 
@@ -1156,7 +1156,7 @@
                 return;
             }
             try {
-                const kml = tokml(geojson, { name:'GAB Wetland and Flood Guide Custom Features', description:'Custom points and polygons from the GAB Wetland and Flood Suitability Guide' });
+                const kml = tokml(geojson, { name:'SiteSense Wetland and Flood Custom Features', description:'Custom points and polygons from SiteSense Wetland and Flood Screening' });
                 const blob = new Blob([kml], { type:'application/vnd.google-earth.kml+xml' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href=url; a.download='GAB-Wetland-Flood-Custom-Data.kml'; a.click();
@@ -1682,7 +1682,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `GAB-Wetland-Flood-Advisory-${new Date().toISOString().slice(0, 10)}.pdf`;
+                a.download = `GAB-SiteSense-Wetland-Flood-Advisory-${new Date().toISOString().slice(0, 10)}.pdf`;
                 a.click();
                 URL.revokeObjectURL(url);
             } catch (err) {
