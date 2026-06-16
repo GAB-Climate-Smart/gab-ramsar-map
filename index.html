@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GAB Ltd - Ramsar Sites Data Map</title>
+    <title>GAB Wetland & Flood Suitability Guide</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
@@ -17,6 +17,11 @@
             --tertiary: #E67E22;
             --carbon: #8E44AD;
             --user: #1565C0;
+            --flood: #00838F;
+            --risk-red: #B3261E;
+            --risk-yellow: #996B00;
+            --risk-green: #176B36;
+            --risk-gray: #5F6368;
             --dark: #1A1A1A;
             --light: #F4F7F2;
             --glass-bg: rgba(255, 255, 255, 0.88);
@@ -53,12 +58,18 @@
         .stat-box.mangrove { background: rgba(230,126,34,0.05); border-color: rgba(230,126,34,0.1); }
         .stat-box.carbon { background: rgba(142,68,173,0.05); border-color: rgba(142,68,173,0.1); }
         .stat-box.user-data { background: rgba(21,101,192,0.05); border-color: rgba(21,101,192,0.1); }
+        .stat-box.flood { background: rgba(0,131,143,0.06); border-color: rgba(0,131,143,0.14); }
         .stat-box:hover { transform: translateY(-2px); }
         .stat-value { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
         .stat-box.mangrove .stat-value { color: var(--tertiary); }
         .stat-box.carbon .stat-value { color: var(--carbon); }
         .stat-box.user-data .stat-value { color: var(--user); }
+        .stat-box.flood .stat-value { color: var(--flood); }
         .stat-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: 600; }
+        .region-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:10px 0 12px; }
+        .region-btn { border:1px solid rgba(44,94,26,0.18); background:white; color:var(--primary); border-radius:8px; padding:7px 8px; font:inherit; font-size:0.72rem; font-weight:700; cursor:pointer; }
+        .region-btn:hover { background:rgba(44,94,26,0.08); }
+        .guide-note { font-size:0.72rem; line-height:1.45; color:#555; background:rgba(0,131,143,0.07); border-left:3px solid var(--flood); padding:8px 10px; border-radius:8px; margin:8px 0 0; }
 
         /* Popups */
         .leaflet-popup-content-wrapper { background: var(--glass-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); padding: 5px; }
@@ -68,11 +79,13 @@
         .custom-popup.mangrove h3 { color: var(--tertiary); border-bottom-color: var(--tertiary); }
         .custom-popup.carbon h3 { color: var(--carbon); border-bottom-color: var(--carbon); }
         .custom-popup.user h3 { color: var(--user); border-bottom-color: var(--user); }
+        .custom-popup.flood h3 { color: var(--flood); border-bottom-color: var(--flood); }
         .custom-popup p { margin: 5px 0; font-size: 0.88rem; color: #444; }
         .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 5px; background: rgba(44,94,26,0.1); color: var(--primary); }
         .badge.mangrove { background: rgba(230,126,34,0.1); color: var(--tertiary); }
         .badge.carbon { background: rgba(142,68,173,0.1); color: var(--carbon); }
         .badge.user { background: rgba(21,101,192,0.1); color: var(--user); }
+        .badge.flood { background: rgba(0,131,143,0.1); color: var(--flood); }
 
         /* Controls */
         .controls-panel {
@@ -95,6 +108,7 @@
         .filter-btn.active[data-filter="mangrove"] { background: var(--tertiary); box-shadow: 0 4px 10px rgba(230,126,34,0.3); }
         .filter-btn.active[data-filter="carbon"] { background: var(--carbon); box-shadow: 0 4px 10px rgba(142,68,173,0.3); }
         .filter-btn.active[data-filter="user"] { background: var(--user); box-shadow: 0 4px 10px rgba(21,101,192,0.3); }
+        .filter-btn.active[data-filter="flood"] { background: var(--flood); box-shadow: 0 4px 10px rgba(0,131,143,0.3); }
 
         .leaflet-control-attribution { background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(4px); }
 
@@ -115,6 +129,44 @@
         .action-btn.blue:hover { background: #0d47a1; }
         .action-btn.teal { background: #00897B; }
         .action-btn.teal:hover { background: #00695c; }
+        .action-btn.amber { background: #B26A00; }
+        .action-btn.amber:hover { background: #8a5200; }
+
+        #suitability-panel {
+            position: fixed; top: 20px; right: -420px; width: 390px; max-width: calc(100vw - 28px);
+            z-index: 2200; background: white; border-radius: 16px; border: 1px solid #e5e7eb;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.25); transition: right 0.35s cubic-bezier(0.16,1,0.3,1);
+            overflow: hidden; font-family: 'Inter', sans-serif;
+        }
+        #suitability-panel.open { right: 20px; }
+        .sp-header { padding:16px 18px; display:flex; justify-content:space-between; gap:12px; align-items:flex-start; border-bottom:1px solid #edf0f2; }
+        .sp-kicker { font-size:0.68rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:var(--flood); margin-bottom:4px; }
+        .sp-title { font-size:1rem; font-weight:800; color:#15201a; line-height:1.2; }
+        .sp-close { background:none; border:none; cursor:pointer; font-size:1.25rem; color:#6b7280; }
+        .sp-body { padding:16px 18px 18px; max-height:calc(100vh - 120px); overflow-y:auto; }
+        .sp-text { font-size:0.82rem; line-height:1.55; color:#4b5563; margin:0 0 12px; }
+        .sp-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+        .sp-field label { display:block; font-size:0.68rem; font-weight:800; letter-spacing:0.05em; color:#6b7280; text-transform:uppercase; margin-bottom:4px; }
+        .sp-field input { width:100%; box-sizing:border-box; border:1px solid #d8dee4; border-radius:8px; padding:8px 9px; font:inherit; font-size:0.82rem; }
+        .sp-actions { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 12px; }
+        .sp-btn { border:none; border-radius:9px; padding:9px 11px; font:inherit; font-size:0.78rem; font-weight:800; cursor:pointer; }
+        .sp-btn.primary { background:var(--primary); color:white; }
+        .sp-btn.secondary { background:#eef6ef; color:var(--primary); }
+        .sp-btn.neutral { background:#f3f4f6; color:#374151; }
+        .sp-status { font-size:0.78rem; color:#6b7280; margin:8px 0; }
+        .risk-card { border-radius:12px; padding:12px; margin-top:10px; border:1px solid #e5e7eb; background:#f8fafc; }
+        .risk-card.red { border-color:rgba(179,38,30,0.25); background:rgba(179,38,30,0.06); }
+        .risk-card.yellow { border-color:rgba(153,107,0,0.28); background:rgba(153,107,0,0.07); }
+        .risk-card.green { border-color:rgba(23,107,54,0.24); background:rgba(23,107,54,0.07); }
+        .risk-card.gray { border-color:#d1d5db; background:#f3f4f6; }
+        .risk-label { font-size:0.92rem; font-weight:850; margin-bottom:6px; }
+        .risk-card.red .risk-label { color:var(--risk-red); }
+        .risk-card.yellow .risk-label { color:var(--risk-yellow); }
+        .risk-card.green .risk-label { color:var(--risk-green); }
+        .risk-card.gray .risk-label { color:var(--risk-gray); }
+        .risk-card p, .risk-card li { font-size:0.78rem; line-height:1.5; color:#374151; }
+        .risk-card ul { padding-left:18px; margin:8px 0 0; }
+        .sp-limit { border-top:1px solid #e5e7eb; margin-top:12px; padding-top:10px; font-size:0.72rem; line-height:1.45; color:#6b7280; }
 
         /* Feature Save Modal */
         #feature-modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); justify-content: center; align-items: center; }
@@ -291,6 +343,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
             Satellite Monitor
         </button>
+        <button class="action-btn amber" id="suitability-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.35 7-11a7 7 0 0 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>
+            Site Check
+        </button>
     </div>
     <input type="file" id="upload-input" accept=".geojson,.json,.kml" style="display:none">
 
@@ -315,9 +371,17 @@
 
     <!-- Header Panel -->
     <div class="overlay header-panel">
-        <div class="logo">GAB Ltd.</div>
-        <h1>Ramsar Sites Data Map</h1>
-        <p class="subtitle">Ecological health, mangrove extent and carbon inventory data across the Keta &amp; Songor Ramsar Sites.</p>
+        <div class="logo">GAB Climate Smart Investments Ltd</div>
+        <h1>Wetland &amp; Flood Suitability Guide</h1>
+        <p class="subtitle">Early spatial screening for wetlands, flood sensitivity, drainage context, terrain and coastal ecosystem signals in Ghana.</p>
+        <div class="region-grid">
+            <button class="region-btn" data-region="accra">Accra Flood Context</button>
+            <button class="region-btn" data-region="winneba">Winneba Coast</button>
+            <button class="region-btn" data-region="kumasi">Kumasi Inland</button>
+            <button class="region-btn" data-region="keta">Keta Lagoon</button>
+            <button class="region-btn" data-region="songor">Songor Lagoon</button>
+            <button class="region-btn" data-region="ghana">Ghana View</button>
+        </div>
         <div class="stats-container">
             <div class="stat-box">
                 <div class="stat-value" id="keta-count">--</div>
@@ -339,11 +403,16 @@
                 <div class="stat-value" id="carbon-count">--</div>
                 <div class="stat-label">Carbon Inventory Plots</div>
             </div>
+            <div class="stat-box flood">
+                <div class="stat-value" id="coastal-count">--</div>
+                <div class="stat-label">Wetland &amp; Coastal Signals</div>
+            </div>
             <div class="stat-box user-data" style="grid-column: 1/-1;">
                 <div class="stat-value" id="user-count">--</div>
-                <div class="stat-label">User Contributed Features</div>
+                <div class="stat-label">Public / User Contributed Features</div>
             </div>
         </div>
+        <div class="guide-note">This guide supports early due diligence. It does not replace EPA, local assembly, Water Resources Commission, engineering, land-title or permitting decisions.</div>
     </div>
 
     <!-- Filter Controls -->
@@ -351,8 +420,42 @@
         <button class="filter-btn active" data-filter="all">All Data</button>
         <button class="filter-btn" data-filter="health">Eco Health</button>
         <button class="filter-btn" data-filter="mangrove">Mangrove</button>
+        <button class="filter-btn" data-filter="flood">Wetland/Flood</button>
         <button class="filter-btn" data-filter="carbon">Carbon</button>
         <button class="filter-btn" data-filter="user">User Added</button>
+    </div>
+
+    <!-- Suitability Screening Panel -->
+    <div id="suitability-panel">
+        <div class="sp-header">
+            <div>
+                <div class="sp-kicker">Public Site Check</div>
+                <div class="sp-title">Terrain and wetland/flood sensitivity screening</div>
+            </div>
+            <button class="sp-close" id="sp-close-btn">&#x2715;</button>
+        </div>
+        <div class="sp-body">
+            <p class="sp-text">Draw a boundary, click a point, or use the map centre. The first public check samples terrain from the GAB OS Earth Engine service and combines it with visible wetland/flood context layers.</p>
+            <div class="sp-row">
+                <div class="sp-field">
+                    <label for="screen-lat">Latitude</label>
+                    <input id="screen-lat" type="number" step="0.000001" placeholder="5.603717">
+                </div>
+                <div class="sp-field">
+                    <label for="screen-lng">Longitude</label>
+                    <input id="screen-lng" type="number" step="0.000001" placeholder="-0.186964">
+                </div>
+            </div>
+            <div class="sp-actions">
+                <button class="sp-btn secondary" id="use-center-btn">Use map centre</button>
+                <button class="sp-btn secondary" id="select-point-btn">Click point</button>
+                <button class="sp-btn primary" id="run-terrain-btn">Run terrain check</button>
+                <button class="sp-btn neutral" id="download-advisory-btn" style="display:none">Download note</button>
+            </div>
+            <div class="sp-status" id="screen-status">No site checked yet.</div>
+            <div id="screen-result"></div>
+            <div class="sp-limit">Screening results are indicative. Sensitive or uncertain results should move into GAB Consultancy/SiteSense review before money, design or construction decisions are made.</div>
+        </div>
     </div>
 
     <!-- Data View Panel -->
@@ -488,6 +591,7 @@
 
     <script src="gis_data.js?v=2"></script>
     <script src="carbon_data.js?v=1"></script>
+    <script src="coastal_data.js?v=1"></script>
 
 
     <script>
@@ -495,6 +599,17 @@
         const SUPABASE_URL  = 'https://wmgbqjmsizixhjosbflg.supabase.co';
         const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtZ2Jxam1zaXppeGhqb3NiZmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDM2MzgsImV4cCI6MjA4ODg3OTYzOH0.NKCSlp_oq9g2Pql9-1fkS_7utUs2tZHGMTNklgvKGhw';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+        const GAB_OS_TERRAIN_API = 'https://app.gabclimatesmart.com/api/eiras/public/wetland-flood/terrain';
+        const CONSULTANCY_INTAKE_URL = 'https://gabclimatesmart.com/contact?category=Consultancy';
+
+        const focusRegions = {
+            accra: { label: 'Accra Flood Context', center: [5.6037, -0.1870], zoom: 12 },
+            winneba: { label: 'Winneba Coast', center: [5.3510, -0.6230], zoom: 12 },
+            kumasi: { label: 'Kumasi Inland', center: [6.6885, -1.6244], zoom: 12 },
+            keta: { label: 'Keta Lagoon', center: [5.8500, 0.8200], zoom: 11 },
+            songor: { label: 'Songor Lagoon', center: [5.8350, 0.6000], zoom: 11 },
+            ghana: { label: 'Ghana View', center: [7.9465, -1.0232], zoom: 7 }
+        };
 
         // ─── Helpers ────────────────────────────────────────────────
         function ddmToDd(degrees, minutes, direction) {
@@ -507,6 +622,15 @@
             if (!iso) return '—';
             const d = new Date(iso);
             return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         // ─── Sampling Data (Eco Health) ─────────────────────────────
@@ -665,12 +789,24 @@
         // ─── Layer Management ────────────────────────────────────────
         const mapLayers = [];
         const userLayers = {}; // id -> layer (for deletion)
-        let ketaCount=0, adaCount=0, mangrovePtCount=0, mangrovePolyCount=0, carbonCount=0;
+        let ketaCount=0, adaCount=0, mangrovePtCount=0, mangrovePolyCount=0, carbonCount=0, coastalCount=0;
+        let selectedScreeningGeometry = null;
+        let selectedScreeningLabel = 'No selected site';
+        let clickSelectActive = false;
+        let lastTerrainResult = null;
 
         function addLayer(layer, category) {
             layer.category = category;
             layer.addTo(map);
             mapLayers.push(layer);
+        }
+
+        function setScreeningPoint(latlng, label) {
+            selectedScreeningGeometry = { type: 'Point', coordinates: [latlng.lng, latlng.lat] };
+            selectedScreeningLabel = label || 'Selected point';
+            document.getElementById('screen-lat').value = latlng.lat.toFixed(6);
+            document.getElementById('screen-lng').value = latlng.lng.toFixed(6);
+            document.getElementById('screen-status').textContent = `${selectedScreeningLabel} ready for terrain screening.`;
         }
 
         // ─── 1. Eco Health ──────────────────────────────────────────
@@ -726,12 +862,46 @@
             });
         }
 
+        // ─── 5. Wetland / Flood Context Signals ─────────────────────
+        if (typeof coastalPoints !== 'undefined') {
+            coastalPoints.forEach(d => {
+                if (!d.lat || !d.lng) return;
+                coastalCount++;
+                const m = L.circleMarker([d.lat, d.lng], {
+                    radius: 6,
+                    color: '#00838F',
+                    weight: 2,
+                    fillColor: '#00ACC1',
+                    fillOpacity: 0.55
+                });
+                m.bindPopup(`<div class="custom-popup flood"><h3>${escapeHtml(d.name)}</h3><p>${escapeHtml(d.desc)}</p><p><strong>Context:</strong> ${escapeHtml(d.ecosystem_type)} · ${escapeHtml(d.site)}</p><p style="color:#888;font-size:0.78rem">Lat:${Number(d.lat).toFixed(4)}, Lng:${Number(d.lng).toFixed(4)}</p><span class="badge flood">Wetland / flood context</span></div>`);
+                addLayer(m, 'flood');
+            });
+        }
+
+        if (typeof coastalPolygons !== 'undefined') {
+            coastalPolygons.forEach(poly => {
+                try {
+                    coastalCount++;
+                    const layer = L.geoJSON(poly.geojson, {
+                        style: { color:'#00838F', weight:2.5, opacity:0.9, fillColor:'#00ACC1', fillOpacity:0.16, dashArray:'7,4' },
+                        onEachFeature: (f, l) => l.bindPopup(`<div class="custom-popup flood"><h3>${escapeHtml(poly.name)}</h3><p>${escapeHtml(poly.desc)}</p><p><strong>Context:</strong> ${escapeHtml(poly.ecosystem_type)} · ${escapeHtml(poly.site)}</p><span class="badge flood">Wetland / flood context polygon</span></div>`)
+                    }).addTo(map);
+                    layer.category = 'flood';
+                    const b = layer.getBounds();
+                    if (b.isValid()) layer._storedBounds = b;
+                    mapLayers.push(layer);
+                } catch(e) { console.error('Coastal polygon error:', poly.name, e); }
+            });
+        }
+
         // ─── Update stats ────────────────────────────────────────────
         document.getElementById('keta-count').innerText          = ketaCount;
         document.getElementById('ada-count').innerText           = adaCount;
         document.getElementById('mangrove-pt-count').innerText   = mangrovePtCount;
         document.getElementById('mangrove-poly-count').innerText = mangrovePolyCount;
         document.getElementById('carbon-count').innerText        = carbonCount;
+        document.getElementById('coastal-count').innerText       = coastalCount;
 
         // ─── Initial bounds fit ──────────────────────────────────────
         try {
@@ -742,6 +912,19 @@
             });
             if (bounds.isValid()) map.fitBounds(bounds, { padding:[50,50] });
         } catch(e) {}
+
+        // ─── Region Navigation ───────────────────────────────────────
+        document.querySelectorAll('.region-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const region = focusRegions[btn.dataset.region];
+                if (!region) return;
+                map.flyTo(region.center, region.zoom, { duration: 1.1 });
+                document.getElementById('screen-status').textContent = `${region.label} selected. Draw a boundary, click a point, or use the map centre for terrain screening.`;
+                if (!document.getElementById('suitability-panel').classList.contains('open')) {
+                    document.getElementById('suitability-panel').classList.add('open');
+                }
+            });
+        });
 
         // ─── Filter logic ────────────────────────────────────────────
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -797,7 +980,23 @@
         });
         map.addControl(drawControl);
 
-        map.on(L.Draw.Event.CREATED, e => { tempFeature = e.layer; openModal(); });
+        map.on(L.Draw.Event.CREATED, e => {
+            tempFeature = e.layer;
+            try {
+                selectedScreeningGeometry = tempFeature.toGeoJSON().geometry;
+                selectedScreeningLabel = selectedScreeningGeometry.type === 'Point' ? 'Drawn point' : 'Drawn boundary';
+                const center = tempFeature.getBounds ? tempFeature.getBounds().getCenter() : tempFeature.getLatLng();
+                if (center) {
+                    document.getElementById('screen-lat').value = center.lat.toFixed(6);
+                    document.getElementById('screen-lng').value = center.lng.toFixed(6);
+                }
+                document.getElementById('suitability-panel').classList.add('open');
+                document.getElementById('screen-status').textContent = `${selectedScreeningLabel} captured for terrain screening.`;
+            } catch(err) {
+                console.warn('Could not prepare feature for screening:', err);
+            }
+            openModal();
+        });
 
         function openModal() {
             document.getElementById('feature-modal').style.display = 'flex';
@@ -927,10 +1126,10 @@
                 return;
             }
             try {
-                const kml = tokml(geojson, { name:'GAB Ramsar Custom Features', description:'Custom points and polygons from the GAB Ramsar Sites Map' });
+                const kml = tokml(geojson, { name:'GAB Wetland and Flood Guide Custom Features', description:'Custom points and polygons from the GAB Wetland and Flood Suitability Guide' });
                 const blob = new Blob([kml], { type:'application/vnd.google-earth.kml+xml' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href=url; a.download='GAB-Ramsar-Custom-Data.kml'; a.click();
+                const a = document.createElement('a'); a.href=url; a.download='GAB-Wetland-Flood-Custom-Data.kml'; a.click();
                 URL.revokeObjectURL(url);
             } catch(e) { console.error('KML export error:', e); alert('Export failed. Check console.'); }
         };
@@ -1096,9 +1295,153 @@
             } catch(e) { console.error('Error loading user table:', e); }
         }
 
+        // ─── Suitability Screening ───────────────────────────────────
+        document.getElementById('suitability-btn').onclick = () => document.getElementById('suitability-panel').classList.toggle('open');
+        document.getElementById('sp-close-btn').onclick = () => document.getElementById('suitability-panel').classList.remove('open');
+
+        document.getElementById('use-center-btn').onclick = () => {
+            setScreeningPoint(map.getCenter(), 'Map centre');
+        };
+
+        document.getElementById('select-point-btn').onclick = () => {
+            clickSelectActive = true;
+            document.getElementById('screen-status').textContent = 'Click any point on the map to select it for screening.';
+            document.getElementById('suitability-panel').classList.add('open');
+        };
+
+        map.on('click', e => {
+            if (!clickSelectActive) return;
+            clickSelectActive = false;
+            setScreeningPoint(e.latlng, 'Clicked point');
+        });
+
+        document.getElementById('run-terrain-btn').onclick = runTerrainScreening;
+        document.getElementById('download-advisory-btn').onclick = downloadAdvisoryNote;
+
+        async function runTerrainScreening() {
+            const status = document.getElementById('screen-status');
+            const resultEl = document.getElementById('screen-result');
+            const downloadBtn = document.getElementById('download-advisory-btn');
+            resultEl.innerHTML = '';
+            downloadBtn.style.display = 'none';
+
+            let payload = null;
+            const lat = Number(document.getElementById('screen-lat').value);
+            const lng = Number(document.getElementById('screen-lng').value);
+            if (selectedScreeningGeometry) {
+                payload = { site_reference: selectedScreeningLabel, geometry: selectedScreeningGeometry };
+            } else if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                payload = { site_reference: 'Manual coordinate', latitude: lat, longitude: lng };
+            }
+
+            if (!payload) {
+                status.textContent = 'Add coordinates, click a point, use the map centre, or draw a boundary first.';
+                return;
+            }
+
+            status.textContent = 'Running terrain screening through GAB OS...';
+
+            try {
+                const response = await fetch(GAB_OS_TERRAIN_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                lastTerrainResult = data;
+
+                if (!response.ok || !data.success) {
+                    const message = data.message || data.error || 'Terrain screening is unavailable.';
+                    status.textContent = message;
+                    resultEl.innerHTML = `
+                        <div class="risk-card gray">
+                            <div class="risk-label">Screening unavailable</div>
+                            <p>${escapeHtml(message)}</p>
+                            <p>Use the visible map layers and request a GAB review for commercially important sites.</p>
+                        </div>`;
+                    return;
+                }
+
+                status.textContent = `Screening completed at ${new Date(data.generated_at).toLocaleString()}.`;
+                renderTerrainResult(data);
+                downloadBtn.style.display = 'inline-block';
+            } catch(err) {
+                console.error('Terrain screening failed:', err);
+                status.textContent = 'Could not reach the GAB OS terrain service.';
+                resultEl.innerHTML = `
+                    <div class="risk-card gray">
+                        <div class="risk-label">Connection issue</div>
+                        <p>The public guide could not reach the terrain service. Try again, or request a GAB review.</p>
+                    </div>`;
+            }
+        }
+
+        function renderTerrainResult(data) {
+            const resultEl = document.getElementById('screen-result');
+            const c = data.classification || {};
+            const terrain = data.terrain || {};
+            const reasons = Array.isArray(c.reasons) ? c.reasons : [];
+            const limits = Array.isArray(c.limitations) ? c.limitations : [];
+            const color = c.color || 'gray';
+            resultEl.innerHTML = `
+                <div class="risk-card ${escapeHtml(color)}">
+                    <div class="risk-label">${escapeHtml(c.label || 'Screening result')}</div>
+                    <p>${escapeHtml(c.summary || 'Terrain screening completed.')}</p>
+                    <p><strong>Mean elevation:</strong> ${terrain.elevationMeanM ?? 'n/a'} m</p>
+                    <p><strong>Mean slope:</strong> ${terrain.slopeMeanDegrees ?? 'n/a'} degrees</p>
+                    ${reasons.length ? `<ul>${reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
+                    ${limits.length ? `<div class="sp-limit">${limits.map(escapeHtml).join(' ')}</div>` : ''}
+                    <div class="sp-actions" style="margin-bottom:0">
+                        <a class="sp-btn primary" href="${CONSULTANCY_INTAKE_URL}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Request GAB review</a>
+                    </div>
+                </div>`;
+        }
+
+        function downloadAdvisoryNote() {
+            if (!lastTerrainResult) return;
+            const c = lastTerrainResult.classification || {};
+            const terrain = lastTerrainResult.terrain || {};
+            const content = `GAB Wetland & Flood Suitability Guide
+
+Site reference: ${selectedScreeningLabel}
+Generated: ${lastTerrainResult.generated_at || new Date().toISOString()}
+
+Screening result: ${c.label || 'Screening result'}
+Summary: ${c.summary || ''}
+
+Mean elevation: ${terrain.elevationMeanM ?? 'n/a'} m
+Mean slope: ${terrain.slopeMeanDegrees ?? 'n/a'} degrees
+
+Reasons:
+${(c.reasons || []).map(r => `- ${r}`).join('\n') || '- None returned'}
+
+Limitations:
+${(c.limitations || []).map(r => `- ${r}`).join('\n') || '- Preliminary screening only'}
+
+Source:
+${lastTerrainResult.source?.name || 'SRTM terrain screening'} via ${lastTerrainResult.source?.access || 'GAB OS'}
+
+Next step:
+Request a GAB Consultancy/SiteSense review before relying on this for purchase, design, construction, permitting, lending, insurance or public claims.
+${CONSULTANCY_INTAKE_URL}
+`;
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `GAB-Wetland-Flood-Advisory-${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
         // Keyboard close
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') { closeModal(); document.getElementById('data-panel').classList.remove('open'); }
+            if (e.key === 'Escape') {
+                closeModal();
+                clickSelectActive = false;
+                document.getElementById('data-panel').classList.remove('open');
+                document.getElementById('suitability-panel').classList.remove('open');
+            }
         });
 
         // ═══════════════════════════════════════════════════════════
