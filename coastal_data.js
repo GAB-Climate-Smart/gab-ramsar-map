@@ -84,5 +84,92 @@ const coastalPolygons = [
                 ]]
             }
         }
+    },
+    {
+        name: 'Korle Lagoon & Odaw Basin',
+        desc: 'Heavily urbanized central Accra drainage basin, highly susceptible to monsoonal floods and drainage blockages.',
+        ecosystem_type: 'wetland / lagoon',
+        site: 'Accra',
+        geojson: {
+            type: "Feature",
+            properties: { name: "Korle Lagoon & Odaw Basin" },
+            geometry: {
+                type: "Polygon",
+                coordinates: [[
+                    [-0.2110, 5.5680], [-0.2180, 5.5550], [-0.2240, 5.5340],
+                    [-0.2290, 5.5360], [-0.2220, 5.5580], [-0.2140, 5.5700],
+                    [-0.2110, 5.5680]
+                ]]
+            }
+        }
+    },
+    {
+        name: 'Kpeshie Lagoon',
+        desc: 'Encroached urban coastal wetland in La/Teshie, subject to tidal blockages and local flooding.',
+        ecosystem_type: 'wetland / lagoon',
+        site: 'Accra',
+        geojson: {
+            type: "Feature",
+            properties: { name: "Kpeshie Lagoon" },
+            geometry: {
+                type: "Polygon",
+                coordinates: [[
+                    [-0.1480, 5.5610], [-0.1420, 5.5600], [-0.1380, 5.5660],
+                    [-0.1410, 5.5720], [-0.1500, 5.5700], [-0.1510, 5.5640],
+                    [-0.1480, 5.5610]
+                ]]
+            }
+        }
+    },
+    {
+        name: 'Chemu Lagoon',
+        desc: 'Industrialized coastal lagoon complex in Tema, vulnerable to toxic runoff, siltation, and peak storm flows.',
+        ecosystem_type: 'wetland / lagoon',
+        site: 'Accra',
+        geojson: {
+            type: "Feature",
+            properties: { name: "Chemu Lagoon" },
+            geometry: {
+                type: "Polygon",
+                coordinates: [[
+                    [0.0030, 5.6320], [0.0090, 5.6360], [0.0070, 5.6420],
+                    [-0.0010, 5.6400], [-0.0020, 5.6340], [0.0030, 5.6320]
+                ]]
+            }
+        }
+    },
+    {
+        name: 'Keta Beach Erosion Zone',
+        desc: 'Coastal strip with high shoreline retreat rates and erosion hazard under sea level rise.',
+        ecosystem_type: 'coastal erosion zone',
+        site: 'Keta',
+        geojson: {
+            type: "Feature",
+            properties: { name: "Keta Beach Erosion Zone" },
+            geometry: {
+                type: "Polygon",
+                coordinates: [[
+                    [0.7800, 5.7720], [1.0200, 5.7740], [1.0200, 5.7790],
+                    [0.7800, 5.7770], [0.7800, 5.7720]
+                ]]
+            }
+        }
+    },
+    {
+        name: 'Dansoman Beach Erosion Zone',
+        desc: 'Dansoman coastal margin vulnerable to severe shoreline erosion and storm surge overtopping.',
+        ecosystem_type: 'coastal erosion zone',
+        site: 'Accra',
+        geojson: {
+            type: "Feature",
+            properties: { name: "Dansoman Beach Erosion Zone" },
+            geometry: {
+                type: "Polygon",
+                coordinates: [[
+                    [-0.2800, 5.5200], [-0.2300, 5.5280], [-0.2300, 5.5320],
+                    [-0.2800, 5.5240], [-0.2800, 5.5200]
+                ]]
+            }
+        }
     }
 ];
