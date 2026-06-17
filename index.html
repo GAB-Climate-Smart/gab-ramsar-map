@@ -114,9 +114,11 @@
         .leaflet-control-attribution { background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(4px); }
 
         /* Action Buttons (bottom right) */
+        /* Action Buttons (bottom right) */
         .action-btns {
             position: absolute; bottom: 40px; right: 40px; z-index: 1000;
             display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+            width: 230px;
         }
         .action-btn {
             background: #2e7d32; color: white; padding: 10px 16px; border-radius: 8px;
@@ -124,6 +126,9 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.25); border: none;
             display: flex; align-items: center; gap: 8px; transition: all 0.25s ease;
             font-family: inherit;
+            width: 100%;
+            justify-content: center;
+            box-sizing: border-box;
         }
         .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
         .action-btn.blue { background: var(--user); }
@@ -132,6 +137,15 @@
         .action-btn.teal:hover { background: #00695c; }
         .action-btn.amber { background: #B26A00; }
         .action-btn.amber:hover { background: #8a5200; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 125, 50, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+        }
+        .primary-pulse {
+            animation: pulse-green 2s infinite;
+        }
 
         #suitability-panel {
             position: fixed; top: 20px; right: -420px; width: 390px; max-width: calc(100vw - 28px);
@@ -328,30 +342,45 @@
 
     <!-- Action Buttons -->
     <div class="action-btns">
-        <button class="action-btn" id="export-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export KML
+        <!-- Prominent Start Here / Site Check Button for public users -->
+        <button class="action-btn primary-pulse" id="suitability-btn" style="background: linear-gradient(135deg, #2e7d32, #1b5e20); font-size: 0.92rem; padding: 12px 18px; border-radius: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.35 7-11a7 7 0 0 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>
+            Start Land Check
         </button>
-        <button class="action-btn teal" id="upload-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Ingest GeoJSON
-        </button>
-        <button class="action-btn blue" id="data-view-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Data View
-        </button>
-        <button class="action-btn" id="sat-monitor-btn" style="background:linear-gradient(135deg,#1565C0,#0D47A1);">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-            Satellite Monitor
-        </button>
+
         <button class="action-btn" id="report-hazard-btn" style="background:#B3261E;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             Report Hazard
         </button>
-        <button class="action-btn amber" id="suitability-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.35 7-11a7 7 0 0 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2"/></svg>
-            Site Check
-        </button>
+
+        <!-- Advanced GIS Tools Menu Button -->
+        <div style="position: relative; width: 100%;">
+            <button class="action-btn" id="advanced-toggle-btn" style="background: #374151; display: flex; justify-content: space-between; align-items: center;">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Advanced GIS Tools
+                </span>
+                <span id="advanced-arrow" style="display: inline-block; transition: transform 0.2s ease;">▼</span>
+            </button>
+            <div id="advanced-tools-dropdown" style="display: none; flex-direction: column; gap: 8px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(8px); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); width: calc(100% - 24px); position: absolute; bottom: 48px; right: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 1001;">
+                <button class="action-btn" id="export-btn" style="justify-content: flex-start; padding: 8px 12px; font-size: 0.8rem; background: #475569;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export KML
+                </button>
+                <button class="action-btn teal" id="upload-btn" style="justify-content: flex-start; padding: 8px 12px; font-size: 0.8rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Ingest GeoJSON
+                </button>
+                <button class="action-btn blue" id="data-view-btn" style="justify-content: flex-start; padding: 8px 12px; font-size: 0.8rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Data View
+                </button>
+                <button class="action-btn" id="sat-monitor-btn" style="background:linear-gradient(135deg,#1565C0,#0D47A1); justify-content: flex-start; padding: 8px 12px; font-size: 0.8rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    Satellite Monitor
+                </button>
+            </div>
+        </div>
     </div>
     <input type="file" id="upload-input" accept=".geojson,.json,.kml" style="display:none">
 
@@ -1328,6 +1357,29 @@
         // ─── Suitability Screening ───────────────────────────────────
         document.getElementById('suitability-btn').onclick = () => document.getElementById('suitability-panel').classList.toggle('open');
         document.getElementById('sp-close-btn').onclick = () => document.getElementById('suitability-panel').classList.remove('open');
+
+        // Advanced GIS tools dropdown logic
+        const advToggle = document.getElementById('advanced-toggle-btn');
+        const advDropdown = document.getElementById('advanced-tools-dropdown');
+        const advArrow = document.getElementById('advanced-arrow');
+        if (advToggle && advDropdown) {
+            advToggle.onclick = (e) => {
+                e.stopPropagation();
+                const isOpen = advDropdown.style.display === 'flex';
+                advDropdown.style.display = isOpen ? 'none' : 'flex';
+                if (advArrow) {
+                    advArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                }
+            };
+            document.addEventListener('click', (e) => {
+                if (!advToggle.contains(e.target) && !advDropdown.contains(e.target)) {
+                    advDropdown.style.display = 'none';
+                    if (advArrow) {
+                        advArrow.style.transform = 'rotate(0deg)';
+                    }
+                }
+            });
+        }
 
         document.getElementById('use-center-btn').onclick = () => {
             setScreeningPoint(map.getCenter(), 'Map centre');
