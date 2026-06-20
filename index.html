@@ -336,9 +336,56 @@
         .sat-toggle-slider:before { content:''; position:absolute; width:14px; height:14px; left:2px; bottom:2px; background:white; border-radius:50%; transition:.3s; }
         .sat-toggle input:checked + .sat-toggle-slider { background:var(--primary); }
         .sat-toggle input:checked + .sat-toggle-slider:before { transform:translateX(16px); }
+
+        /* ─── First-visit welcome / "start here" overlay ─────────────── */
+        #welcome-overlay { position: fixed; inset: 0; z-index: 4000; display: flex; align-items: center; justify-content: center; background: rgba(10,20,10,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 20px; }
+        #welcome-overlay.hidden { display: none; }
+        .welcome-card { background: #fff; width: 430px; max-width: 100%; border-radius: 16px; padding: 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.35); animation: slideDown 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+        .welcome-kicker { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .welcome-kicker::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); }
+        .welcome-card h2 { font-size: 1.5rem; margin: 12px 0 6px; color: var(--dark); line-height: 1.15; }
+        .welcome-card p.lead { font-size: 0.9rem; color: #555; line-height: 1.5; margin: 0 0 18px; }
+        .welcome-steps { list-style: none; padding: 0; margin: 0 0 22px; display: flex; flex-direction: column; gap: 12px; }
+        .welcome-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 0.88rem; color: #333; line-height: 1.4; }
+        .welcome-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .welcome-actions { display: flex; flex-direction: column; gap: 10px; }
+        .welcome-start { width: 100%; padding: 13px; border: none; border-radius: 10px; background: linear-gradient(135deg,#2e7d32,#1b5e20); color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .welcome-explore { background: none; border: none; color: #666; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; padding: 4px; }
+        .welcome-free { margin-top: 14px; font-size: 0.72rem; color: #999; text-align: center; }
     </style>
 </head>
 <body>
+
+    <!-- First-visit welcome / "start here" overlay -->
+    <div id="welcome-overlay">
+        <div class="welcome-card">
+            <div class="welcome-kicker">GAB Climate Smart · Free tool</div>
+            <h2>Check your land before you commit.</h2>
+            <p class="lead">See instantly whether a location in Ghana touches a protected wetland, mangrove zone, or flood-risk buffer, then download a screening report.</p>
+            <ol class="welcome-steps">
+                <li><span class="welcome-num">1</span><span>Search a place or tap the map to find your site.</span></li>
+                <li><span class="welcome-num">2</span><span>Draw your plot boundary with a few taps.</span></li>
+                <li><span class="welcome-num">3</span><span>See protected areas, flood risk, and setbacks, then download your result.</span></li>
+            </ol>
+            <div class="welcome-actions">
+                <button class="welcome-start" id="welcome-start-btn">Start a land check &rarr;</button>
+                <button class="welcome-explore" id="welcome-explore-btn">Or just explore the map</button>
+            </div>
+            <p class="welcome-free">Free &middot; No login &middot; Preliminary screening</p>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var ov = document.getElementById('welcome-overlay');
+            if (!ov) return;
+            function dismiss() { ov.classList.add('hidden'); try { localStorage.setItem('gab_ramsar_welcome_seen', '1'); } catch (e) {} }
+            try { if (localStorage.getItem('gab_ramsar_welcome_seen')) ov.classList.add('hidden'); } catch (e) {}
+            var sb = document.getElementById('welcome-start-btn');
+            var eb = document.getElementById('welcome-explore-btn');
+            if (sb) sb.addEventListener('click', function () { dismiss(); var s = document.getElementById('suitability-btn'); if (s) s.click(); });
+            if (eb) eb.addEventListener('click', dismiss);
+        })();
+    </script>
 
     <!-- Action Buttons -->
     <div class="action-btns">
